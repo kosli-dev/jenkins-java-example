@@ -37,10 +37,9 @@ pipeline {
 
         stage('Archive') {
             steps {
-                dir('app') {
-                    // Archive the build artifacts
-                    archiveArtifacts artifacts: 'build/libs/*.jar', allowEmptyArchive: true
-                }
+
+                // Archive the build artifacts
+                archiveArtifacts artifacts: 'app/build/libs/*.jar', allowEmptyArchive: true
             }
         }
     }
