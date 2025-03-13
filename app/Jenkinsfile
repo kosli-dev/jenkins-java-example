@@ -11,30 +11,36 @@ pipeline {
         stage('Setup') {
             steps {
             // Change to the app directory
-            dir('app') {
-                // Run any setup commands here
-                sh 'ls -al'
-            }
+                dir('app') {
+                    // Run any setup commands here
+                    sh 'ls -al'
+                }
             }
         }
         stage('Build') {
             steps {
-                // Run the Gradle build
-                sh './gradlew build'
+                dir('app') {
+                    // Run the Gradle build
+                    sh './gradlew build'
+                }
             }
         }
 
         stage('Test') {
             steps {
-                // Run the Gradle tests
-                sh './gradlew test'
+                dir('app') {
+                    // Run the Gradle tests
+                    sh './gradlew test'
+                }
             }
         }
 
         stage('Archive') {
             steps {
-                // Archive the build artifacts
-                archiveArtifacts artifacts: 'build/libs/*.jar', allowEmptyArchive: true
+                dir('app') {
+                    // Archive the build artifacts
+                    archiveArtifacts artifacts: 'build/libs/*.jar', allowEmptyArchive: true
+                }
             }
         }
     }
