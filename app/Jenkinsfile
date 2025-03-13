@@ -8,7 +8,15 @@ pipeline {
                 checkout scm
             }
         }
-
+        stage('Setup') {
+            steps {
+            // Change to the app directory
+            dir('app') {
+                // Run any setup commands here
+                sh 'ls -al'
+            }
+            }
+        }
         stage('Build') {
             steps {
                 // Run the Gradle build
