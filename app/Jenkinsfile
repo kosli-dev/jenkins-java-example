@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+
+    tools {
+        // Install the Gradle version configured in the system
+        gradle 'Gradle_6.8.3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the repository
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                // Run the Gradle build
+                sh './gradlew build'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                // Run the Gradle tests
+                sh './gradlew test'
+            }
+        }
+
+        stage('Archive') {
+            steps {
+                // Archive the build artifacts
+                archiveArtifacts artifacts: 'build/libs/*.jar', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up the workspace after the build
+            cleanWs()
+        }
+    }
+}
