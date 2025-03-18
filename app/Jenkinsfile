@@ -1,4 +1,10 @@
 pipeline {
+
+    environment {
+        KOSLI_ORG = 'kosli-public'
+        KOSLI_API_KEY = credentials('kosli-api-key')
+
+    }
     agent any
 
     stages {
@@ -14,6 +20,7 @@ pipeline {
                 dir('app') {
                     // Run any setup commands here
                     sh 'ls -al'
+                    kosli list envs
                 }
             }
         }
