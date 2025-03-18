@@ -20,7 +20,7 @@ pipeline {
                 dir('app') {
                     // Run any setup commands here
                     sh 'ls -al'
-                    kosli list envs
+                    sh 'kosli list envs'
                 }
             }
         }
