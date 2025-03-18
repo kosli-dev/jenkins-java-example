@@ -2,7 +2,7 @@ pipeline {
 
     environment {
         KOSLI_ORG = 'kosli-public'
-        KOSLI_API_KEY = credentials('kosli-api-key')
+        KOSLI_API_TOKEN = credentials('kosli-api-key')
 
     }
     agent any
