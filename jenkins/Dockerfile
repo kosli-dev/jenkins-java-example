@@ -4,7 +4,7 @@ USER root
 RUN sh -c 'echo "deb [trusted=yes] https://apt.fury.io/kosli/ /"  > /etc/apt/sources.list.d/fury.list' && \
         apt install ca-certificates && \
         apt update && \
-        apt install kosli
+        apt install -y kosli vim
 
 # drop back to the regular jenkins user - good practice
 USER jenkins
