@@ -12,6 +12,8 @@ pipeline {
             steps {
                 // Checkout the code from the repository
                 checkout scm
+                sh 'pwd'
+                sh 'ls -al'
             }
         }
         stage('Setup') {
@@ -30,7 +32,7 @@ pipeline {
                     // Run the Gradle build
                     sh './gradlew build'
                     sh '''
-                        kosli attest artifact build/libs/app.jar \
+                        kosli attest artifact app/build/libs/app.jar \
 	                        --artifact-type file \
 	                        --flow jenkins-java-example \
 	                        --trail $GIT_COMMIT \
