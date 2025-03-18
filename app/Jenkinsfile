@@ -29,6 +29,13 @@ pipeline {
                 dir('app') {
                     // Run the Gradle build
                     sh './gradlew build'
+                    sh '''
+                        kosli attest artifact app/app/build/libs/*.jar \
+	                        --artifact-type file \
+	                        --flow jenkins-java-example \
+	                        --trail $GIT_COMMIT \
+	                        --name jarfile
+                    '''
                 }
             }
         }
@@ -46,7 +53,7 @@ pipeline {
             steps {
 
                 // Archive the build artifacts
-                archiveArtifacts artifacts: 'app/build/libs/*.jar', allowEmptyArchive: true
+                archiveArtifacts artifacts: 'app/app/build/libs/*.jar', allowEmptyArchive: false
             }
         }
     }
