@@ -31,10 +31,10 @@ pipeline {
                 dir('app') {
                     // Run the Gradle build
                     sh './gradlew build'
-                    sh 'ls -al build/libs'
+                    sh 'ls -al app/build/libs'
                 }
                 sh '''
-                        kosli attest artifact app/build/libs/app.jar \
+                        kosli attest artifact app/app/build/libs/app.jar \
 	                        --artifact-type file \
 	                        --flow jenkins-java-example \
 	                        --trail $GIT_COMMIT \
