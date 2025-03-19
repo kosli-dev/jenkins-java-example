@@ -6,5 +6,11 @@ RUN sh -c 'echo "deb [trusted=yes] https://apt.fury.io/kosli/ /"  > /etc/apt/sou
         apt update && \
         apt install -y kosli vim
 
+
+# install snyk
+RUN curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux-arm64 -o snyk && \
+    chmod +x ./snyk && \
+    mv ./snyk /usr/local/bin/
+
 # drop back to the regular jenkins user - good practice
 USER jenkins
