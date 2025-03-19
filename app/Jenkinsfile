@@ -56,7 +56,7 @@ pipeline {
             steps {
 
                 // Archive the build artifacts
-                archiveArtifacts artifacts: 'app/build/libs/*.jar', allowEmptyArchive: false
+                archiveArtifacts artifacts: 'app/app/build/libs/*.jar', allowEmptyArchive: false
             }
         }
     }
