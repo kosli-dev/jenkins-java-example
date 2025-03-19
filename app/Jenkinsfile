@@ -3,7 +3,7 @@ pipeline {
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
-
+        SNYK_TOKEN= credentials('snyk-api-token')
     }
     agent any
 
@@ -48,6 +48,17 @@ pipeline {
                 dir('app') {
                     // Run the Gradle tests
                     sh './gradlew test'
+                }
+            }
+        }
+
+        stage('Snyk Scan') {
+            steps {
+                dir('app') {
+                    // Run the Snyk scan
+                    sh 'snyk auth $SNYK_API_TOKEN'
+                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
+                    sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
                 }
             }
         }
