@@ -12,5 +12,9 @@ RUN curl --compressed https://downloads.snyk.io/cli/stable/snyk-linux-arm64 -o s
     chmod +x ./snyk && \
     mv ./snyk /usr/local/bin/
 
+# install docker    
+RUN apt update && curl -fsSL https://get.docker.com | sh
+RUN usermod -aG docker jenkins
+
 # drop back to the regular jenkins user - good practice
 USER jenkins

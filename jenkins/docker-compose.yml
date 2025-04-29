@@ -6,12 +6,33 @@ services:
       dockerfile: Dockerfile
     image: kosli-jenkins
     container_name: jenkins
+    networks:
+      - dev-net
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
+    group_add:
+      - "${DOCKER_GID:-999}"
+    environment: 
+      - DOCKER_HOST=socat:2375
   ssh-agent:
     image: jenkins/ssh-agent
+
+  socat:
+    image: alpine/socat
+    container_name: socat
+    networks:
+      - dev-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: tcp-listen:2375,fork,reuseaddr unix-connect:/var/run/docker.sock
+    restart: unless-stopped
+
 volumes:
   jenkins_home:
+
+networks:
+  dev-net:
+    driver: bridge

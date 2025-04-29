@@ -70,6 +70,16 @@ pipeline {
                 archiveArtifacts artifacts: 'app/app/build/libs/*.jar', allowEmptyArchive: false
             }
         }
+
+        // Build and push Docker image
+        stage('Docker Build and Push') {
+            steps {
+                dir('app') {
+                    // Build the Docker image
+                    sh 'docker build -t myapp:latest .'
+                }
+            }
+        }
     }
 
     post {
