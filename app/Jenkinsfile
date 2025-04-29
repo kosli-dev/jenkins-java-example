@@ -4,6 +4,7 @@ pipeline {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
         SNYK_TOKEN= credentials('snyk-api-token')
+        DOCKER_PASSWORD = credentials('docker-hub-pat')
     }
     agent any
 
@@ -76,7 +77,11 @@ pipeline {
             steps {
                 dir('app') {
                     // Build the Docker image
-                    sh 'docker build -t myapp:latest .'
+                    sh 'docker build -t jenkins-java-example:latest .'
+                    // Push the Docker image to a registry
+                    sh 'docker tag jenkins-java-example:latest meekrosoft/jenkins-java-example:latest'
+                    sh 'docker login -u meekrosoft -p $DOCKER_PASSWORD'
+                    sh 'docker push meekrosoft/jenkins-java-example:latest'
                 }
             }
         }
