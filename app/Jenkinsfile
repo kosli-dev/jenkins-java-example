@@ -97,7 +97,7 @@ pipeline {
                         --artifact-type oci \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
-                        --name docker-image
+                        --name docker-image \
                         --registry-username meekrosoft \
                         --registry-password $DOCKER_PASSWORD
                 '''
