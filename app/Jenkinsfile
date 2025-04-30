@@ -94,10 +94,12 @@ pipeline {
                 }
                 sh '''
                     kosli attest artifact meekrosoft/jenkins-java-example:latest \
-                        --artifact-type docker \
+                        --artifact-type oci \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name docker-image
+                        --registry-username meekrosoft \
+                        --registry-password $DOCKER_PASSWORD
                 '''
             }
         }
