@@ -94,7 +94,7 @@ pipeline {
                 }
                 sh '''
                     kosli attest artifact meekrosoft/jenkins-java-example:latest \
-                        --artifact-type docker-image \
+                        --artifact-type docker \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name docker-image
