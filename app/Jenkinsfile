@@ -58,8 +58,15 @@ pipeline {
                 dir('app') {
                     // Run the Snyk scan
                     sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
+                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1 --sarif-file-output=snyk-code-test.json'
                     sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
+                    sh '''
+                        kosli attest snyk \
+                            --flow jenkins-java-example \
+                            --trail $GIT_COMMIT \
+                            --name snyk-scan \
+                            --scan-results snyk-code-test.json
+                    '''
                 }
             }
         }
@@ -82,6 +89,14 @@ pipeline {
                     sh 'docker tag jenkins-java-example:latest meekrosoft/jenkins-java-example:latest'
                     sh 'docker login -u meekrosoft -p $DOCKER_PASSWORD'
                     sh 'docker push meekrosoft/jenkins-java-example:latest'
+                    sh 'docker image inspect meekrosoft/jenkins-java-example:latest'
+                    sh '''
+                        kosli attest artifact meekrosoft/jenkins-java-example:latest \
+                            --artifact-type docker-image \
+                            --flow jenkins-java-example \
+                            --trail $GIT_COMMIT \
+                            --name docker-image
+                    '''
                 }
             }
         }
