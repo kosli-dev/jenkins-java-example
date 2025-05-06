@@ -16,7 +16,7 @@ jobs:
           user: ${{ secrets.JENKINS_USER_TEST }}
           # token: ${{ secrets.JENKINS_TOKEN }}
           token: ${{ secrets.JENKINS_API_TOKEN_TEST }}
-          job: "java-example"
+          job: "jenkins-example"
           parameters: |
             GIT_BRANCH=${{ github.ref }}
             GIT_COMMIT=${{ github.sha }}
