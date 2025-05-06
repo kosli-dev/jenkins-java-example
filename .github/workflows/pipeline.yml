@@ -1,0 +1,23 @@
+name: Trigger Jenkins Pipeline
+
+on:
+  push:
+    branches:
+      - 'shared-jenkins'
+
+jobs:
+  trigger-jenkins:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Jenkins Job
+        uses: appleboy/jenkins-action@master
+        with:
+          url: "https://jenkins.kosli.tools"
+          user: ${{ secrets.JENKINS_USER_TEST }}
+          # token: ${{ secrets.JENKINS_TOKEN }}
+          token: ${{ secrets.JENKINS_API_TOKEN_TEST }}
+          job: "java-example"
+          parameters: |
+            GIT_BRANCH=${{ github.ref }}
+            GIT_COMMIT=${{ github.sha }}
+            GIT_REPO=${{ github.repository }} 
