@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Trigger Jenkins Job
         run: |
-          curl -X POST "https://jenkins.kosli.tools/job/jenkins-example/build" \
+          curl -XL POST "https://jenkins.kosli.tools/job/jenkins-example/build" \
             --user "${{ secrets.JENKINS_USER_TEST }}:${{ secrets.JENKINS_API_TOKEN_TEST }}" \
             --data-urlencode json="{
               \"parameter\": [
