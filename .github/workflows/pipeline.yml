@@ -9,8 +9,11 @@ jobs:
   trigger-jenkins:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Jenkins Job
+      - name: Check IP and Trigger Jenkins Job
         run: |
+          echo "Checking IP address..."
+          curl -s https://api.ipify.org
+          echo -e "\n\nTriggering Jenkins job..."
           curl -XL POST "https://jenkins.kosli.tools/job/jenkins-example/build" \
             --user "${{ secrets.JENKINS_USER_TEST }}:${{ secrets.JENKINS_API_TOKEN_TEST }}" \
             --data-urlencode json="{
