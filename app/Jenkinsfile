@@ -111,8 +111,8 @@ pipeline {
                     aws eks update-kubeconfig --name kosli-demo
                     export KUBECONFIG=/root/.kube/config
                     
-                    # Create or update deployment
-                    kubectl apply -f app/k8s/deployment.yaml
+                    # Deploy the app to the staging environment
+                    kubectl apply -f app/k8s/deployment.yaml -n staging
                     
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example
