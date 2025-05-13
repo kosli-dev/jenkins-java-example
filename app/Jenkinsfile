@@ -5,6 +5,7 @@ pipeline {
         KOSLI_API_TOKEN = credentials('kosli-api-key')
         SNYK_TOKEN= credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
+        KUBECONFIG = credentials('kubernetes-config')
     }
     agent any
 
@@ -100,6 +101,24 @@ pipeline {
                         --name docker-image \
                         --registry-username meekrosoft \
                         --registry-password $DOCKER_PASSWORD
+                '''
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Apply the Kubernetes manifests
+                sh '''
+                    aws eks update-kubeconfig --name kosli-demo
+                    
+                    # Check connection to the cluster
+                    kubectl get nodes
+                    
+                    # Create or update deployment
+                    kubectl apply -f app/k8s/deployment.yaml
+                    
+                    # Wait for deployment to be ready
+                    kubectl rollout status deployment/jenkins-java-example
                 '''
             }
         }

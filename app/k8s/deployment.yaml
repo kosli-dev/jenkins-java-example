@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-java-example
+  labels:
+    app: jenkins-java-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins-java-example
+  template:
+    metadata:
+      labels:
+        app: jenkins-java-example
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-java-example
+spec:
+  selector:
+    app: jenkins-java-example
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP 
