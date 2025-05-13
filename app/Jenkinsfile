@@ -7,10 +7,16 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
     }
     agent any
-
+    options {
+        // This is required if you want to clean before build
+        skipDefaultCheckout(true)
+    }
+    
     stages {
         stage('Checkout') {
             steps {
+                // Clean workspace before checkout
+                cleanWs()
                 // Checkout the code from the repository
                 checkout scm
                 sh 'pwd'
@@ -125,7 +131,7 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            // No cleanup after build to preserve workspace
         }
     }
 }
