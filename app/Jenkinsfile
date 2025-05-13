@@ -118,6 +118,8 @@ pipeline {
             steps {
                 // Apply the Kubernetes manifests
                 sh '''
+                    whoami
+                    
                     aws eks update-kubeconfig --name kosli-demo
                     
                     # Check connection to the cluster
