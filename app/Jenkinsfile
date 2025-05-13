@@ -7,22 +7,12 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
     }
     agent any
-    options {
-        // This is required if you want to clean before build
-        skipDefaultCheckout(true)
-    }
-    
+
     stages {
         stage('Checkout') {
             steps {
-                // Clean workspace before checkout
-                cleanWs()
                 // Checkout the code from the repository
                 checkout scm
-                // Set GIT_COMMIT variable
-                script {
-                    env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-                }
                 sh 'pwd'
                 sh 'ls -al'
             }
@@ -118,22 +108,23 @@ pipeline {
             steps {
                 // Apply the Kubernetes manifests
                 sh '''
-                    # Create kubeconfig and make sure it works
                     aws eks update-kubeconfig --name kosli-demo
-                    
-                    # Explicitly use the created config
                     export KUBECONFIG=/root/.kube/config
                     
-                    # Check connection to the cluster with verbose output
-                    kubectl get nodes -v=9
-                    
                     # Create or update deployment
-                    kubectl --kubeconfig=/root/.kube/config apply -f app/k8s/deployment.yaml
+                    kubectl apply -f app/k8s/deployment.yaml
                     
                     # Wait for deployment to be ready
-                    kubectl --kubeconfig=/root/.kube/config rollout status deployment/jenkins-java-example
+                    kubectl rollout status deployment/jenkins-java-example
                 '''
             }
+        }
+    }
+
+    post {
+        always {
+            // Clean up the workspace after the build
+            cleanWs()
         }
     }
 }
