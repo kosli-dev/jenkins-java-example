@@ -123,7 +123,7 @@ pipeline {
                     aws eks update-kubeconfig --name kosli-demo
                     
                     # Check connection to the cluster
-                    kubectl get nodes
+                    kubectl get nodes -v=10
                     
                     # Create or update deployment
                     kubectl apply -f app/k8s/deployment.yaml
