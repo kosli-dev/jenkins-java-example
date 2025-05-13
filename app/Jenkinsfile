@@ -5,7 +5,6 @@ pipeline {
         KOSLI_API_TOKEN = credentials('kosli-api-key')
         SNYK_TOKEN= credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
-        KUBECONFIG = credentials('kubernetes-config')
     }
     agent any
 
@@ -126,8 +125,10 @@ pipeline {
 
     post {
         always {
-            // Clean up the workspace after the build
-            cleanWs()
+            node {
+                // Clean up the workspace after the build
+                cleanWs()
+            }
         }
     }
 }

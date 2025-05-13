@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:latest
+        image: meekrosoft/jenkins-java-example:latest
         ports:
         - containerPort: 80
 ---
