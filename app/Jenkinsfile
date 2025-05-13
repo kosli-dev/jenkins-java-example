@@ -125,10 +125,7 @@ pipeline {
 
     post {
         always {
-            node {
-                // Clean up the workspace after the build
-                cleanWs()
-            }
+            cleanWs()
         }
     }
 }
