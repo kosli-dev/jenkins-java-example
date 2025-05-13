@@ -19,6 +19,10 @@ pipeline {
                 cleanWs()
                 // Checkout the code from the repository
                 checkout scm
+                // Set GIT_COMMIT variable
+                script {
+                    env.GIT_COMMIT = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                }
                 sh 'pwd'
                 sh 'ls -al'
             }
