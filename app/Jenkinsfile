@@ -128,10 +128,4 @@ pipeline {
             }
         }
     }
-
-    post {
-        always {
-            // No cleanup after build to preserve workspace
-        }
-    }
 }
