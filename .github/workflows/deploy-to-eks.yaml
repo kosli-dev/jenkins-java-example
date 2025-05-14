@@ -18,8 +18,8 @@ jobs:
 
     - name: Set up kubeconfig
       run: |
-        mkdir -p $HOME/.kube
-        echo ${{ secrets.KUBECONFIG }} > ~/.kube/config
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
 
     - name: Test cluster access
       run: kubectl get pods -n staging
