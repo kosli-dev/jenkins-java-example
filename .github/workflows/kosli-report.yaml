@@ -24,6 +24,12 @@ jobs:
     - name: Test cluster access
       run: kubectl get pods -n staging
 
+    - name: Setup Kosli cli
+      uses: kosli-dev/setup-cli-action@v2
+      with:
+        version:
+          ${{ vars.KOSLI_CLI_VERSION }}
+
     - name: Kosli report staging
       run: |
         kosli snapshot k8s --org kosli-public -n staging
