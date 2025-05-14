@@ -88,6 +88,9 @@ pipeline {
         }
 
         stage('Archive') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
             steps {
 
                 // Archive the build artifacts
