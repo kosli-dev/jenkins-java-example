@@ -6,7 +6,7 @@ pipeline {
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
-        SNYK_TOKEN= credentials('snyk-api-token')
+        SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
     }
     agent any

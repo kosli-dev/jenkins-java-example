@@ -1,0 +1,33 @@
+name: Kosli report
+
+on:
+  push:
+    branches: [main]
+
+env: 
+  KOSLI_ORG: kosli-public
+  KOSLI_API_TOKEN: "${{ secrets.KOSLI_API_TOKEN_PUBLIC }}"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo ${{ secrets.KUBECONFIG }} > ~/.kube/config
+
+    - name: Test cluster access
+      run: kubectl get pods -n staging
+
+    - name: Kosli report staging
+      run: |
+        kosli snapshot k8s --org kosli-public -n staging
+
+    - name: Kosli report production
+      run: |
+        kosli snapshot k8s --org kosli-public -n production
