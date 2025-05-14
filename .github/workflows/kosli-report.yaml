@@ -32,8 +32,8 @@ jobs:
 
     - name: Kosli report staging
       run: |
-        kosli snapshot k8s -n staging
+        kosli snapshot k8s jenkins-java-example-staging -n staging
 
     - name: Kosli report production
       run: |
-        kosli snapshot k8s -n production
+        kosli snapshot k8s jenkins-java-example-production -n production
