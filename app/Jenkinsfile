@@ -109,8 +109,8 @@ pipeline {
                     // Build and push the Docker image for linux/amd64 architecture
                     sh "docker login -u meekrosoft -p $DOCKER_PASSWORD"
                     sh "docker buildx create --use || true"
-                    sh "docker buildx build --platform linux/amd64 -t meekrosoft/jenkins-java-example:${SHORT_SHA} --push ."
                     sh "docker buildx build --platform linux/amd64 -t meekrosoft/jenkins-java-example:${SHORT_SHA} --load ."
+                    sh "docker push meekrosoft/jenkins-java-example:${SHORT_SHA}"
                     sh "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA}"
                 }
                 sh '''
