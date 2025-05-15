@@ -106,12 +106,10 @@ pipeline {
             }
             steps {
                 dir('app') {
-                    // Build the Docker image
-                    sh "docker build --build-arg COMMIT_SHA=$GIT_COMMIT -t jenkins-java-example:${SHORT_SHA} ."
-                    // Push the Docker image to a registry
-                    sh "docker tag jenkins-java-example:${SHORT_SHA} meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    // Build and push the Docker image for linux/amd64 architecture
                     sh "docker login -u meekrosoft -p $DOCKER_PASSWORD"
-                    sh "docker push meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    sh "docker buildx create --use || true"
+                    sh "docker buildx build --platform linux/amd64 -t meekrosoft/jenkins-java-example:${SHORT_SHA} --push ."
                     sh "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA}"
                 }
                 sh '''
