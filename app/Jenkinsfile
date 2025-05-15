@@ -132,6 +132,8 @@ pipeline {
             steps {
                 // Apply the Kubernetes manifests
                 sh '''
+                    kosli snapshot k8s jenkins-java-example-staging -n staging
+
                     aws eks update-kubeconfig --name kosli-demo
                     export KUBECONFIG=/root/.kube/config
 
@@ -140,6 +142,8 @@ pipeline {
 
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example -n staging
+
+                    kosli snapshot k8s jenkins-java-example-staging -n staging
                 '''
             }
         }
@@ -150,6 +154,8 @@ pipeline {
             steps {
                 // Apply the Kubernetes manifests to production
                 sh '''
+                    kosli snapshot k8s jenkins-java-example-prod -n production
+
                     aws eks update-kubeconfig --name kosli-demo
                     export KUBECONFIG=/root/.kube/config
                     
@@ -158,6 +164,8 @@ pipeline {
                     
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example -n production
+
+                    kosli snapshot k8s jenkins-java-example-prod -n production
                 '''
             }
         }
