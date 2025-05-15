@@ -106,7 +106,7 @@ pipeline {
             steps {
                 dir('app') {
                     // Build the Docker image
-                    sh 'docker build -t jenkins-java-example:latest .'
+                    sh "docker build --build-arg COMMIT_SHA=$GIT_COMMIT -t jenkins-java-example:latest ."
                     // Push the Docker image to a registry
                     sh 'docker tag jenkins-java-example:latest meekrosoft/jenkins-java-example:latest'
                     sh 'docker login -u meekrosoft -p $DOCKER_PASSWORD'
