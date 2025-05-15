@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: meekrosoft/jenkins-java-example:latest
+        image: meekrosoft/jenkins-java-example:${IMAGE_TAG}
         imagePullPolicy: Always
         ports:
         - containerPort: 80

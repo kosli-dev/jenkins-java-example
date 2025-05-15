@@ -8,6 +8,7 @@ pipeline {
         KOSLI_API_TOKEN = credentials('kosli-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
+        SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
     }
     agent any
 
@@ -106,15 +107,15 @@ pipeline {
             steps {
                 dir('app') {
                     // Build the Docker image
-                    sh "docker build --build-arg COMMIT_SHA=$GIT_COMMIT -t jenkins-java-example:latest ."
+                    sh "docker build --build-arg COMMIT_SHA=$GIT_COMMIT -t jenkins-java-example:${SHORT_SHA} ."
                     // Push the Docker image to a registry
-                    sh 'docker tag jenkins-java-example:latest meekrosoft/jenkins-java-example:latest'
-                    sh 'docker login -u meekrosoft -p $DOCKER_PASSWORD'
-                    sh 'docker push meekrosoft/jenkins-java-example:latest'
-                    sh 'docker image inspect meekrosoft/jenkins-java-example:latest'
+                    sh "docker tag jenkins-java-example:${SHORT_SHA} meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    sh "docker login -u meekrosoft -p $DOCKER_PASSWORD"
+                    sh "docker push meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    sh "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA}"
                 }
                 sh '''
-                    kosli attest artifact meekrosoft/jenkins-java-example:latest \
+                    kosli attest artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
                         --artifact-type oci \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
@@ -134,10 +135,10 @@ pipeline {
                 sh '''
                     aws eks update-kubeconfig --name kosli-demo
                     export KUBECONFIG=/root/.kube/config
-                    
-                    # Deploy the app to the staging environment
-                    kubectl apply -f app/k8s/deployment.yaml -n staging
-                    
+
+                    export IMAGE_TAG=${SHORT_SHA}
+                    envsubst < app/k8s/deployment.yaml | kubectl apply -n staging -f -
+
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example -n staging
                 '''
