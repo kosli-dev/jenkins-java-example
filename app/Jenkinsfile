@@ -16,12 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout the code from the repository
-                checkout scm: [
-                    $class: 'GitSCM',
-                    branches: [[name: 'refs/heads/develop']],
-                    extensions: [],
-                    userRemoteConfigs: scm.userRemoteConfigs
-                ]
+                checkout scm
                 sh 'pwd'
                 sh 'ls -al'
             }
