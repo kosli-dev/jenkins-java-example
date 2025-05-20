@@ -10,6 +10,7 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         FAKE_TEST_RESULTS = true
+        DOCKER_API_VERSION = '1.44'
     }
     agent any
 
@@ -146,11 +147,17 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-                sh '''
-                    kosli assert artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
-                        --artifact-type docker \
-                        --flow jenkins-java-example
-                '''
+                script {
+                    def status = sh(script: '''
+                        kosli assert artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
+                            --artifact-type docker \
+                            --flow jenkins-java-example
+                    ''', returnStatus: true)
+                    
+                    if (status != 0) {
+                        error "Kosli artifact assertion failed with status ${status}"
+                    }
+                }
             }
         }
         
