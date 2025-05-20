@@ -9,7 +9,7 @@ pipeline {
         SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-    }
+        FAKE_TEST_RESULTS = true
     agent any
 
     stages {
@@ -63,6 +63,21 @@ pipeline {
                     // Run the Gradle tests
                     sh './gradlew test'
                 }
+            }
+        }
+
+        stage('Fake Test Results') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                sh '''
+                    kosli attest generic \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name fake-test-results \
+                        --compliant=$FAKE_TEST_RESULTS
+                ''' 
             }
         }
 
@@ -121,6 +136,19 @@ pipeline {
                         --name docker-image \
                         --registry-username meekrosoft \
                         --registry-password $DOCKER_PASSWORD
+                '''
+            }
+        }
+
+        stage('Assert Artifact') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                sh '''
+                    kosli assert artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
+                        --artifact-type docker \
+                        --flow jenkins-java-example
                 '''
             }
         }
