@@ -28,9 +28,9 @@ jobs:
         version:
           ${{ vars.KOSLI_CLI_VERSION }}
 
-    - name: Kosli report staging
+    - name: Kosli report dev
       run: |
-        kosli snapshot k8s jenkins-java-example-staging -n staging
+        kosli snapshot k8s jenkins-java-example-dev -n staging
 
     - name: Kosli report production
       run: |
