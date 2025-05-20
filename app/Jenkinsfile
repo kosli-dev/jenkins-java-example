@@ -10,6 +10,7 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         FAKE_TEST_RESULTS = true
+    }
     agent any
 
     stages {
