@@ -18,9 +18,6 @@ pipeline {
             }
         }
         stage('Setup') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
             steps {
             // Change to the app directory
                 dir('app') {
@@ -63,12 +60,12 @@ pipeline {
                     // Build and push the Docker image for linux/amd64 architecture
                     sh "docker login -u meekrosoft -p $DOCKER_PASSWORD"
                     sh "docker buildx create --use || true"
-                    sh "docker buildx build --platform linux/amd64 -t meekrosoft/jenkins-java-example:${SHORT_SHA} --load ."
-                    sh "docker push meekrosoft/jenkins-java-example:${SHORT_SHA}"
-                    sh "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    sh "docker buildx build --platform linux/amd64 -t meekrosoft/break-glass-example:${SHORT_SHA} --load ."
+                    sh "docker push meekrosoft/break-glass-example:${SHORT_SHA}"
+                    sh "docker image inspect meekrosoft/break-glass-example:${SHORT_SHA}"
                 }
                 sh '''
-                    kosli attest artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
+                    kosli attest artifact meekrosoft/break-glass-example:${SHORT_SHA} \
                         --artifact-type oci \
                         --flow jenkins-java-example-break-glass \
                         --trail $GIT_COMMIT \
@@ -89,6 +86,7 @@ pipeline {
                     export KUBECONFIG=/root/.kube/config
                     
                     export IMAGE_TAG=${SHORT_SHA}
+                    export IMAGE_NAME=break-glass-example
                     envsubst < app/k8s/deployment.yaml | kubectl apply -n production -f -
                     
                     # Wait for deployment to be ready

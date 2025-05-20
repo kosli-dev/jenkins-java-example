@@ -138,6 +138,7 @@ pipeline {
                     export KUBECONFIG=/root/.kube/config
 
                     export IMAGE_TAG=${SHORT_SHA}
+                    export IMAGE_NAME=jenkins-java-example
                     envsubst < app/k8s/deployment.yaml | kubectl apply -n staging -f -
 
                     # Wait for deployment to be ready
@@ -160,6 +161,7 @@ pipeline {
                     export KUBECONFIG=/root/.kube/config
                     
                     export IMAGE_TAG=${SHORT_SHA}
+                    export IMAGE_NAME=jenkins-java-example
                     envsubst < app/k8s/deployment.yaml | kubectl apply -n production -f -
                     
                     # Wait for deployment to be ready
