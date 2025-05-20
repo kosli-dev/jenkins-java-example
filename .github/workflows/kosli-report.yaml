@@ -1,6 +1,5 @@
 name: Kosli report
 
-
 on:
   schedule:
     - cron: '*/1 * * * *'
