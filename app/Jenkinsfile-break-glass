@@ -1,0 +1,109 @@
+pipeline {
+
+    environment {
+        KOSLI_ORG = 'kosli-public'
+        KOSLI_API_TOKEN = credentials('kosli-api-key')
+        DOCKER_PASSWORD = credentials('docker-hub-pat')
+        SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+    }
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the repository
+                checkout scm
+                sh 'pwd'
+                sh 'ls -al'
+            }
+        }
+        stage('Setup') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+            // Change to the app directory
+                dir('app') {
+                    // Run any setup commands here
+                    sh 'ls -al'
+                    sh 'kosli list envs'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('app') {
+                    // Run the Gradle build
+                    sh './gradlew build'
+                    sh 'ls -al app/build/libs'
+                }
+                sh '''
+                        kosli attest artifact app/app/build/libs/app.jar \
+	                        --artifact-type file \
+	                        --flow jenkins-java-example-break-glass \
+	                        --trail $GIT_COMMIT \
+	                        --name jarfile
+                    '''
+            }
+        }
+
+
+        stage('Archive') {
+            steps {
+
+                // Archive the build artifacts
+                archiveArtifacts artifacts: 'app/app/build/libs/*.jar', allowEmptyArchive: false
+            }
+        }
+
+        // Build and push Docker image
+        stage('Docker Build and Push') {
+            steps {
+                dir('app') {
+                    // Build and push the Docker image for linux/amd64 architecture
+                    sh "docker login -u meekrosoft -p $DOCKER_PASSWORD"
+                    sh "docker buildx create --use || true"
+                    sh "docker buildx build --platform linux/amd64 -t meekrosoft/jenkins-java-example:${SHORT_SHA} --load ."
+                    sh "docker push meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                    sh "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA}"
+                }
+                sh '''
+                    kosli attest artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
+                        --artifact-type oci \
+                        --flow jenkins-java-example-break-glass \
+                        --trail $GIT_COMMIT \
+                        --name docker-image \
+                        --registry-username meekrosoft \
+                        --registry-password $DOCKER_PASSWORD
+                '''
+            }
+        }
+        
+        stage('Deploy to Production') {
+            steps {
+                // Apply the Kubernetes manifests to production
+                sh '''
+                    kosli snapshot k8s jenkins-java-example-prod -n production
+
+                    aws eks update-kubeconfig --name kosli-demo
+                    export KUBECONFIG=/root/.kube/config
+                    
+                    export IMAGE_TAG=${SHORT_SHA}
+                    envsubst < app/k8s/deployment.yaml | kubectl apply -n production -f -
+                    
+                    # Wait for deployment to be ready
+                    kubectl rollout status deployment/jenkins-java-example -n production
+
+                    kosli snapshot k8s jenkins-java-example-prod -n production
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up the workspace after the build
+            cleanWs()
+        }
+    }
+}
