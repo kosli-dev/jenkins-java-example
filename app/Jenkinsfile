@@ -10,7 +10,7 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
-        CX_COMPLIANCE = 'non_compliant'  // 'compliant' or 'non_compliant'
+        CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
     }
     agent any
 
