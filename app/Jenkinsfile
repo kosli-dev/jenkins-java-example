@@ -97,7 +97,7 @@ pipeline {
             steps {
                sh '''
                     kosli attest custom \
-                        --attestation-type checkmarx-scan \
+                        --type checkmarx-scan \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-scan \
