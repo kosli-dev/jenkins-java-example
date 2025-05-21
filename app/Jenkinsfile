@@ -9,8 +9,8 @@ pipeline {
         SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-        FAKE_TEST_RESULTS = true
         DOCKER_API_VERSION = '1.44'
+        CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
     }
     agent any
 
@@ -68,21 +68,6 @@ pipeline {
             }
         }
 
-        stage('Fake Test Results') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-                sh '''
-                    kosli attest generic \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name fake-test-results \
-                        --compliant=$FAKE_TEST_RESULTS
-                ''' 
-            }
-        }
-
         stage('Snyk Scan') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
@@ -110,18 +95,14 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-                script {
-                    step([
-                        $class: 'CxScanBuilder',
-                        credentialsId: 'checkmarx-ast-credentials',
-                        serverUrl: 'https://deu.ast.checkmarx.net',
-                        projectName: 'kosli-dev/jenkins-java-example',
-                        sastEnabled: true,
-                        preset: 'Default',
-                        vulnerabilityThresholdResult: 'FAILURE',
-                        waitForResultsEnabled: true
-                    ])
-                }
+               sh '''
+                    kosli attest custom \
+                        --attestation-type checkmarx-scan \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name checkmarx-scan \
+                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                ''' 
             }
         }
 
