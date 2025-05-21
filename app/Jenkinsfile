@@ -105,6 +105,27 @@ pipeline {
             }
         }
 
+        stage('Checkmarx Scan') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                script {
+                    step([
+                        $class: 'CxScanBuilder',
+                        credentialsId: 'checkmarx-ast-credentials',
+                        serverUrl: 'https://deu.ast.checkmarx.net',
+                        projectName: 'kosli-dev/jenkins-java-example',
+                        sastEnabled: true,
+                        preset: 'Default',
+                        vulnerabilityThresholdResult: 'FAILURE',
+                        waitForResultsEnabled: true
+                    ])
+                }
+            }
+        }
+
+
         stage('Archive') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
