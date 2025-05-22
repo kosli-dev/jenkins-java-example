@@ -2,6 +2,7 @@ pipeline {
     parameters {
         choice(name: 'DEPLOY_ENV', choices: ['staging', 'production'], description: 'Choose environment to deploy')
     }
+    
 
     environment {
         KOSLI_ORG = 'kosli-public'
