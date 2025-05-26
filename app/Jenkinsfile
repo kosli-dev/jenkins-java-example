@@ -148,7 +148,7 @@ pipeline {
                           -H 'Authorization: Bearer ${KOSLI_API_TOKEN}'
                     """, returnStdout: true).trim()
                     
-                    def jsonResponse = readJSON text: response
+                    def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
                     if (!jsonResponse.compliant) {
                         error "Kosli artifact assertion failed: artifact is not compliant"
                     }
