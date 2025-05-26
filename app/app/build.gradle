@@ -9,6 +9,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id("org.sonarqube") version "6.2.0.5505"
 }
 
 repositories {
@@ -36,6 +37,12 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+sonar {
+  properties {
+    property("sonar.projectKey", "jenkins-java-example")
+  }
 }
 
 application {
