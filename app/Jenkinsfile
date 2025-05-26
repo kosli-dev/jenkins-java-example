@@ -24,19 +24,6 @@ pipeline {
                 sh 'ls -al'
             }
         }
-        stage('Setup') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-            // Change to the app directory
-                dir('app') {
-                    // Run any setup commands here
-                    sh 'ls -al'
-                    sh 'kosli list envs'
-                }
-            }
-        }
         stage('Build') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
@@ -82,11 +69,12 @@ pipeline {
                     
                 }
                 sh '''
-                    kosli attest snyk \
+                    kosli attest custom \
+                        --type custom-snyk-scan \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name snyk-scan \
-                        --scan-results app/snyk-code-test.json
+                        --attestation-data app/snyk-code-test.json
                 ''' 
             }
         }

@@ -1,0 +1,10 @@
+version: 1
+trail:
+  attestations:
+  - name: snyk-scan
+    type: custom:custom-snyk-scan
+  - name: checkmarx-scan
+    type: custom:checkmarx-scan
+  artifacts:
+  - name: jarfile
+  - name: docker-image
