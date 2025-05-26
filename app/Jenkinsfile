@@ -149,6 +149,8 @@ pipeline {
                     """, returnStdout: true).trim()
                     
                     def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
+                    echo "Parsed response - compliant: ${jsonResponse.compliant}, html_url: ${jsonResponse.html_url}"
+                    
                     if (!jsonResponse.compliant) {
                         error "Kosli artifact assertion failed: artifact is not compliant"
                     }
