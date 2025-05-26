@@ -139,11 +139,14 @@ pipeline {
             }
             steps {
                 script {
-                    def status = sh(script: '''
-                        kosli assert artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
-                            --artifact-type docker \
-                            --flow jenkins-java-example
-                    ''', returnStatus: true)
+                    def imageDigest = sh(script: "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA} --format '{{.RepoDigests}}' | grep -o 'sha256:[a-f0-9]*' | cut -d':' -f2", returnStdout: true).trim()
+                    
+                    def status = sh(script: """
+                        curl -X 'GET' \\
+                          'https://app.kosli.com/api/v2/asserts/kosli-public/fingerprint/${imageDigest}?flow_name=jenkins-java-example' \\
+                          -H 'accept: application/json' \\
+                          -H 'Authorization: Bearer ${KOSLI_API_TOKEN}'
+                    """, returnStatus: true)
                     
                     if (status != 0) {
                         error "Kosli artifact assertion failed with status ${status}"
