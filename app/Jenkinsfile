@@ -71,6 +71,12 @@ pipeline {
                 // - assert scan result
                 dir('app') {
                     script {
+                        @NonCPS
+                        def sleepTen() {
+                            echo "Sleeping for 10 seconds..."
+                            sleep 10
+                        }
+
                         def response = sh(script: """
                             curl -X POST \
                             https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
@@ -110,11 +116,6 @@ pipeline {
                         def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         echo "Scan ID: ${scanId}"
 
-                        @NonCPS
-                        def sleepTen() {
-                            echo "Sleeping for 10 seconds..."
-                            sleep 10
-                        }
                         // Poll for scan completion
                         def scanStatus = "Running"
                         def scanDetails = ""
