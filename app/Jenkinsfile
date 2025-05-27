@@ -149,20 +149,17 @@ pipeline {
                         def status = parsed.results[0]?.status
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
                         def userData = groovy.json.JsonOutput.toJson(parsed)
-                        // Save to environment for use outside 'app'
+                        writeFile file: "../checkmarx_compare_result.json", text: userData
                         env.CX_COMPLIANT = cxCompliant
-                        env.CX_USER_DATA = userData
                     }
                 }
-                // Attesting above the Checkmarx scan result
-
-                                           
+                // Now run kosli from the repo root, referencing the file
                 sh """
                     kosli attest generic \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-compare \
-                        --user-data '${CX_USER_DATA}' \
+                        --user-data checkmarx_compare_result.json \
                         --compliant=${CX_COMPLIANT}
                 """
             }
