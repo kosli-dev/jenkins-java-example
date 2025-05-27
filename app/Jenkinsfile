@@ -64,8 +64,9 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-                dir('app') {
-                    script {
+                script {
+                    // 1. Run scan and write compareResult to workspace root
+                    dir('app') {
                         def response = sh(script: """
                             curl -X POST \
                             https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
@@ -73,7 +74,6 @@ pipeline {
                             --data "client_id=ast-app" \
                             --data "refresh_token=${CX_REFRESH_TOKEN}"
                         """, returnStdout: true).trim()
-                        
                         def accessToken = new groovy.json.JsonSlurper().parseText(response).access_token
 
                         def scanCreationResponse = sh(script: """
@@ -107,7 +107,6 @@ pipeline {
 
                         //def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
-                        echo "Scan ID: ${scanId}"
 
                         // Poll for scan completion
                         def scanStatus = "Running"
@@ -142,16 +141,15 @@ pipeline {
 
                         // Write the JSON to a file in the workspace root
                         writeFile file: "${env.WORKSPACE}/checkmarx_compare_result.json", text: compareResult
-                       }
-                }
-                script {
-                    // Read the status field from the file using Groovy
-                    def compareJson = readFile('checkmarx_compare_result.json')
+                    }
+
+                    // 2. Now in workspace root, still in the same script block
+                    def compareJson = readFile("${env.WORKSPACE}/checkmarx_compare_result.json")
                     def parsed = new groovy.json.JsonSlurper().parseText(compareJson)
                     def status = parsed.results[0]?.status
                     def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
 
-                    // Run kosli attest from the workspace root
+                    // 3. Run kosli attest from the workspace root
                     sh """
                         kosli attest generic \
                             --flow jenkins-java-example \
