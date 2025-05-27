@@ -5,11 +5,17 @@ package org.example;
 
 public class App {
     public String getGreeting() {
+       // to show sonar failing we need remove the comment block around
+       // the try and catch block below by removing the /* and */ characters
+
+       /* 
         try {
             int x = 1 / 0;
         } catch (Exception e) {
-            e.printStackTrace(); //Comment this line to force SonarQube to report an issue and be non compliant 
+            e.printStackTrace();  
         }
+        */
+
         return "Hello World!";
     }
 
