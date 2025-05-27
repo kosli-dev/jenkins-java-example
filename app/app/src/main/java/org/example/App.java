@@ -5,15 +5,11 @@ package org.example;
 
 public class App {
     public String getGreeting() {
-        return "Hello World!";
-        return "Hello World!";
-        return "Hello World!";
-        return "Hello World!";
-        return "Hello World!";
+        String password = "SonarCloudScanFail123"; // Comment this out if you want SonarCloud scan to pass
         return "Hello World!";
     }
 
     public static void main(String[] args) {
         System.out.println(new App().getGreeting());
-    }
+    }   
 }
