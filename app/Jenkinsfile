@@ -12,6 +12,7 @@ pipeline {
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
         CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
+        CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
     }
     agent any
 
@@ -84,7 +85,71 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-               sh '''
+                // - authenticate with checkmarx
+                // - trigger async scan
+                // - get results from scan via its ID
+                // - attest scan result
+                // - assert scan result
+                dir('app') {
+                    script {
+                        def response = sh(script: """
+                            curl -X POST \
+                            https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
+                            --data "grant_type=refresh_token" \
+                            --data "client_id=ast-app" \
+                            --data "refresh_token=${CX_REFRESH_TOKEN}"
+                        """, returnStdout: true).trim()
+                        
+                        def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
+                        def accessToken = jsonResponse.access_token
+                        echo "Access Token: ${accessToken}"
+
+                        // def scanResponse = sh(script: """
+                        //     curl --request POST \
+                        //     --url https://ast.checkmarx.net/api/scans/ \
+                        //     --header 'Accept: application/json; version=1.0' \
+                        //     --header 'Authorization: Bearer ${accessToken}' \
+                        //     --header 'Content-Type: application/json; version=1.0' \
+                        //     --header 'CorrelationId: ' \
+                        //     --data '{
+                        //     "type": "upload",
+                        //     "handler": {
+                        //         "branch": "string",
+                        //         "commit": "string",
+                        //         "tag": "string",
+                        //         "repoUrl": "string",
+                        //         "credentials": {
+                        //         "username": "string",
+                        //         "type": "apiKey",
+                        //         "value": "string"
+                        //         }
+                        //     },
+                        //     "project": {
+                        //         "id": "string",
+                        //         "tags": {
+                        //         "demoTag": "",
+                        //         "demoTagKey": "demoTagValue1"
+                        //         }
+                        //     },
+                        //     "config": [
+                        //         {
+                        //         "type": "sca",
+                        //         "value": {
+                        //             "incremental": "true",
+                        //             "presetName": "Default"
+                        //         }
+                        //         }
+                        //     ],
+                        //     "tags": {
+                        //         "demoTag": "",
+                        //         "demoTagKey": "demoTagValue1"
+                        //     }
+                        //     }'
+                        // """, returnStdout: true).trim()
+                    }
+                }
+                // Attest the Checkmarx scan result
+                sh '''
                     kosli attest custom \
                         --type checkmarx-scan \
                         --flow jenkins-java-example \
