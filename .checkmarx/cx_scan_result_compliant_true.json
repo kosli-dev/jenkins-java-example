@@ -2,7 +2,7 @@
     "TotalIssues": 0,
     "CriticalIssues": 0,
     "HighIssues": 0,
-    "MediumIssues": 0,
+    "MediumIssues": 1,
     "LowIssues": 0,
     "InfoIssues": 0,
     "SastIssues": 0,

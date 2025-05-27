@@ -11,7 +11,7 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
-        CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
+        CX_COMPLIANT = 'true' // Hardwired for demo purposes
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
         CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
         CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
@@ -134,12 +134,12 @@ pipeline {
                 }
                 // Attest the Checkmarx scan result
                 sh '''
-                    kosli attest custom \
-                        --type checkmarx-scan \
+                    kosli attest generic \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
-                        --name checkmarx-scan \
-                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                        --name checkmarx-compare \
+                        --attestation-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANT}.json \
+                        --compliant=${CX_COMPLIANT}
                 ''' 
             }
         }
