@@ -102,7 +102,8 @@ pipeline {
                             --data "refresh_token=${CX_REFRESH_TOKEN}"
                         """, returnStdout: true).trim()
                         
-                        def accessToken = new groovy.json.JsonSlurper().parseText(response).access_token
+                        def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
+                        def accessToken = jsonResponse.access_token
 
                         def scanCreationResponse = sh(script: """
                             curl --request POST \
