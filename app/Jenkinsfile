@@ -149,18 +149,14 @@ pipeline {
                         def status = parsed.results[0]?.status
                         echo "Checkmarx compare status: ${status}"
 
-                        if (status == "RECURRENT" || status == "FIXED") {
-                            echo "true"
-                        } else {
-                            echo "false"
-                        }
+                        def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
+                        echo "Checkmarx compliance status: ${cxCompliant}"
                         
                     }
                 }
                 // Attest the Checkmarx scan result
 
-                def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
-                               
+                                           
                 sh '''
                     kosli attest generic \
                         --flow jenkins-java-example \
