@@ -124,6 +124,7 @@ pipeline {
                             scanStatus = scanJson.status
                             // echo "Current scan status: ${scanStatus}"
                             if (scanStatus == "Running") {
+                                echo "Going to wait for 10 seconds before checking again..."
                                 sleep 10
                                 echo "Waiting for scan to complete..."
                             }
