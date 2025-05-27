@@ -151,12 +151,13 @@ pipeline {
 
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
 
+                        def userData = groovy.json.JsonOutput.toJson(parsed)
                         sh """
                             kosli attest generic \
                                 --flow jenkins-java-example \
                                 --trail \$GIT_COMMIT \
                                 --name checkmarx-compare \
-                                --user-data '${parsed}' \
+                                --user-data '${userData}' \
                                 --compliant=${cxCompliant}
                         """
                     }
