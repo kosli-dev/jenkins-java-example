@@ -3,14 +3,15 @@ pipeline {
         choice(name: 'DEPLOY_ENV', choices: ['staging', 'production'], description: 'Choose environment to deploy')
     }
 
+
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
         SNYK_TOKEN = credentials('snyk-api-token')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-        FAKE_TEST_RESULTS = true
         DOCKER_API_VERSION = '1.44'
+        CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
     }
     agent any
 
@@ -21,19 +22,6 @@ pipeline {
                 checkout scm
                 sh 'pwd'
                 sh 'ls -al'
-            }
-        }
-        stage('Setup') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-            // Change to the app directory
-                dir('app') {
-                    // Run any setup commands here
-                    sh 'ls -al'
-                    sh 'kosli list envs'
-                }
             }
         }
         stage('Build') {
@@ -68,21 +56,6 @@ pipeline {
             }
         }
 
-        stage('Fake Test Results') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-                sh '''
-                    kosli attest generic \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name fake-test-results \
-                        --compliant=$FAKE_TEST_RESULTS
-                ''' 
-            }
-        }
-
         stage('Snyk Scan') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
@@ -96,12 +69,42 @@ pipeline {
                     
                 }
                 sh '''
-                    kosli attest snyk \
+                    kosli attest custom \
+                        --type custom-snyk-scan \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name snyk-scan \
-                        --scan-results app/snyk-code-test.json
+                        --attestation-data app/snyk-code-test.json
                 ''' 
+            }
+        }
+
+        stage('Checkmarx Scan') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+               sh '''
+                    kosli attest custom \
+                        --type checkmarx-scan \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name checkmarx-scan \
+                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                ''' 
+            }
+        }
+
+        stage('SonarCloud analysis') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                dir('app') {
+                    withSonarQubeEnv('SonarQube Cloud') { // Will pick the global server connection you have configured
+                        sh './gradlew sonar'
+                    }
+                }
             }
         }
 
@@ -148,14 +151,20 @@ pipeline {
             }
             steps {
                 script {
-                    def status = sh(script: '''
-                        kosli assert artifact meekrosoft/jenkins-java-example:${SHORT_SHA} \
-                            --artifact-type docker \
-                            --flow jenkins-java-example
-                    ''', returnStatus: true)
+                    def imageDigest = sh(script: "docker image inspect meekrosoft/jenkins-java-example:${SHORT_SHA} --format '{{.RepoDigests}}' | grep -o 'sha256:[a-f0-9]*' | cut -d':' -f2", returnStdout: true).trim()
                     
-                    if (status != 0) {
-                        error "Kosli artifact assertion failed with status ${status}"
+                    def response = sh(script: """
+                        curl -X 'GET' \\
+                          'https://app.kosli.com/api/v2/asserts/kosli-public/fingerprint/${imageDigest}?flow_name=jenkins-java-example' \\
+                          -H 'accept: application/json' \\
+                          -H 'Authorization: Bearer ${KOSLI_API_TOKEN}'
+                    """, returnStdout: true).trim()
+                    
+                    def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
+                    echo "Parsed response - compliant: ${jsonResponse.compliant}, html_url: ${jsonResponse.html_url}"
+                    
+                    if (!jsonResponse.compliant) {
+                        error "Kosli artifact assertion failed: artifact is not compliant"
                     }
                 }
             }
@@ -180,6 +189,8 @@ pipeline {
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example -n staging
 
+                    echo "Waiting for 30 seconds before taking snapshot"
+                    sleep 30
                     kosli snapshot k8s jenkins-java-example-staging -n staging
                 '''
             }
@@ -203,6 +214,8 @@ pipeline {
                     # Wait for deployment to be ready
                     kubectl rollout status deployment/jenkins-java-example -n production
 
+                    echo "Waiting for 30 seconds before taking snapshot"
+                    sleep 30
                     kosli snapshot k8s jenkins-java-example-prod -n production
                 '''
             }
