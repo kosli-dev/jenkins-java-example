@@ -5,7 +5,11 @@ package org.example;
 
 public class App {
     public String getGreeting() {
-        String password = "SonarCloudScanFail123"; // Comment this out if you want SonarCloud scan to pass
+        try {
+            int x = 1 / 0;
+        } catch (Exception e) {
+            // SonarCloud will flag this empty catch block
+        }
         return "Hello World!";
     }
 
