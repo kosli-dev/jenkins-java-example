@@ -122,9 +122,10 @@ pipeline {
                             """, returnStdout: true).trim()
                             def scanJson = new groovy.json.JsonSlurper().parseText(scanDetails)
                             scanStatus = scanJson.status
-                            echo "Current scan status: ${scanStatus}"
+                            // echo "Current scan status: ${scanStatus}"
                             if (scanStatus == "Running") {
                                 sleep 10
+                                echo "Waiting for scan to complete..."
                             }
                         }
                         echo "done."
