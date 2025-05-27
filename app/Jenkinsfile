@@ -102,14 +102,13 @@ pipeline {
                             --data "refresh_token=${CX_REFRESH_TOKEN}"
                         """, returnStdout: true).trim()
                         
-                        def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
-                        def accessToken = jsonResponse.access_token
+                        def accessToken = new groovy.json.JsonSlurper().parseText(response).access_token
 
                         def scanCreationResponse = sh(script: """
                             curl --request POST \
                             https://deu.ast.checkmarx.net/api/scans/ \
                             --header 'Accept: application/json' \
-                            --header "Authorization: Bearer ${access_token}" \
+                            --header "Authorization: Bearer ${accessToken}" \
                             --header 'Content-Type: application/json; version=1.0' \
                             --data '{
                                 "project": { 
