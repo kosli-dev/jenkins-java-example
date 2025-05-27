@@ -101,7 +101,7 @@ pipeline {
                                         "type": "sast",
                                         "value": {
                                             "incremental": "false",
-                                            "presetName": "Default"
+                                            "presetName": "All"
                                         }
                                     }
                                 ]
@@ -143,7 +143,7 @@ pipeline {
                             --header 'Accept: application/json; version=1.0' \
                             --header "Authorization: Bearer ${accessToken}"
                         """, returnStdout: true).trim()
-                        
+
                         echo "Checkmarx compare result: ${compareResult}"
                         def status = new groovy.json.JsonSlurper().parseText(compareResult).status
                         echo "Checkmarx compare status: ${status}"
