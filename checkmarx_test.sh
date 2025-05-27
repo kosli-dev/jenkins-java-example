@@ -58,8 +58,16 @@ scanId=$sastScanId
 #     --header 'Accept: application/json; version=1.0' \
 #     --header "Authorization: Bearer ${accessToken}" | jq .
 
-# Get detailed SAST scan results
-curl --request GET \
+# Get detailed SAST scan results and check status
+result=$(curl --silent --request GET \
     --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
     --header 'Accept: application/json; version=1.0' \
-    --header "Authorization: Bearer ${accessToken}" | jq .
+    --header "Authorization: Bearer ${accessToken}")
+
+status=$(echo "$result" | jq -r '.status')
+
+if [ "$status" = "RECURRENT" ] || [ "$status" = "FIXED" ]; then
+    echo "true"
+else
+    echo "false"
+fi

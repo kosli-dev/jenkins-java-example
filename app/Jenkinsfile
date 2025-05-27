@@ -107,6 +107,9 @@ pipeline {
                                 ]
                             }'
                         """, returnStdout: true).trim()
+
+                        echo "Raw scan creation response: ${scanCreationResponse}"
+
                         def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         echo "Scan ID: ${scanId}"
 
