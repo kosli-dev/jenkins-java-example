@@ -8,7 +8,7 @@ public class App {
         try {
             int x = 1 / 0;
         } catch (Exception e) {
-            // SonarCloud will flag this empty catch block
+            e.printStackTrace(); //Comment this line to force SonarQube to report an issue and be non compliant 
         }
         return "Hello World!";
     }
