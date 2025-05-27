@@ -149,9 +149,7 @@ pipeline {
                         def status = parsed.results[0]?.status
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
                         def userData = groovy.json.JsonOutput.toJson(parsed)
-                        writeFile file: "${env.WORKSPACE}/checkmarx_compare_result.json", text: userData
-                        echo "Checkmarx compare result written to ${env.WORKSPACE}/checkmarx_compare_result.json"
-                    }
+                       }
                 }
                 // Now run kosli from the repo root, referencing the file
                 sh """
