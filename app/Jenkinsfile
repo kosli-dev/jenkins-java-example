@@ -59,29 +59,6 @@ pipeline {
             }
         }
 
-        stage('Snyk Scan') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-                dir('app') {
-                    // Run the Snyk scan
-                    sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1 --sarif-file-output=snyk-code-test.json'
-                    sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
-                    
-                }
-                sh '''
-                    kosli attest custom \
-                        --type custom-snyk-scan \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name snyk-scan \
-                        --attestation-data app/snyk-code-test.json
-                ''' 
-            }
-        }
-
        stage('Checkmarx Scan') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
@@ -130,10 +107,16 @@ pipeline {
                                 ]
                             }'
                         """, returnStdout: true).trim()
-                        echo "Scan creation response: ${scanCreationResponse}"
-
                         def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         echo "Scan ID: ${scanId}"
+
+                        def scanDetails = sh(script: """
+                            curl --request GET \
+                            --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
+                            --header 'Accept: application/json; version=1.0' \
+                            --header "Authorization: Bearer ${accessToken}"
+                        """, returnStdout: true).trim()
+                        echo "Scan Details: ${scanDetails}"
                     }
                 }
                 // Attest the Checkmarx scan result
@@ -144,6 +127,29 @@ pipeline {
                         --trail $GIT_COMMIT \
                         --name checkmarx-scan \
                         --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                ''' 
+            }
+        }
+
+        stage('Snyk Scan') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                dir('app') {
+                    // Run the Snyk scan
+                    sh 'snyk auth $SNYK_TOKEN'
+                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1 --sarif-file-output=snyk-code-test.json'
+                    sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
+                    
+                }
+                sh '''
+                    kosli attest custom \
+                        --type custom-snyk-scan \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name snyk-scan \
+                        --attestation-data app/snyk-code-test.json
                 ''' 
             }
         }
