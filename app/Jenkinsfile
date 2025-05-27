@@ -149,7 +149,7 @@ pipeline {
                         def status = parsed.results[0]?.status
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
                         def userData = groovy.json.JsonOutput.toJson(parsed)
-                        writeFile file: "../checkmarx_compare_result.json", text: userData
+                        writeJSON file: "${env.WORKSPACE}/checkmarx_compare_result.json", json: parsed
                         env.CX_COMPLIANT = cxCompliant
                     }
                 }
@@ -159,7 +159,7 @@ pipeline {
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-compare \
-                        --user-data checkmarx_compare_result.json \
+                        --user-data "${env.WORKSPACE}/checkmarx_compare_result.json" \
                         --compliant=${CX_COMPLIANT}
                 """
             }
