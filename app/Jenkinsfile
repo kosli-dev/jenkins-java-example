@@ -133,9 +133,26 @@ pipeline {
                             }
                         }
                         echo "done."
-                    }
+                      
+                        def baseScanId = "182a6054-6eca-474d-bdcf-e4b5c9348ff0" // Set your base scan ID here
 
-                    
+                        def compareResult = sh(script: """
+                            curl --silent --request GET \
+                            --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
+                            --header 'Accept: application/json; version=1.0' \
+                            --header "Authorization: Bearer ${accessToken}"
+                        """, returnStdout: true).trim()
+
+                        def status = new groovy.json.JsonSlurper().parseText(compareResult).status
+                        echo "Checkmarx compare status: ${status}"
+
+                        if (status == "RECURRENT" || status == "FIXED") {
+                            echo "true"
+                        } else {
+                            echo "false"
+                        }
+                        
+                    }
                 }
                 // Attest the Checkmarx scan result
                 sh '''
