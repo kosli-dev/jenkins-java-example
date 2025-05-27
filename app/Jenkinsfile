@@ -110,13 +110,24 @@ pipeline {
                         def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         echo "Scan ID: ${scanId}"
 
-                        def scanDetails = sh(script: """
-                            curl --request GET \
-                            --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
-                            --header 'Accept: application/json; version=1.0' \
-                            --header "Authorization: Bearer ${accessToken}"
-                        """, returnStdout: true).trim()
-                        echo "Scan Details: ${scanDetails}"
+                        // Poll for scan completion
+                        def scanStatus = "Running"
+                        def scanDetails = ""
+                        while (scanStatus == "Running") {
+                            scanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            def scanJson = new groovy.json.JsonSlurper().parseText(scanDetails)
+                            scanStatus = scanJson.status
+                            echo "Current scan status: ${scanStatus}"
+                            if (scanStatus == "Running") {
+                                sleep 10
+                            }
+                        }
+                        echo "Final Scan Details: ${scanDetails}"
                     }
                 }
                 // Attest the Checkmarx scan result
