@@ -113,7 +113,6 @@ pipeline {
                         // Poll for scan completion
                         def scanStatus = "Running"
                         def scanDetails = ""
-                        def scanJson = ""
                         while (scanStatus == "Running") {
                             scanDetails = sh(script: """
                                 curl --request GET \
@@ -121,14 +120,14 @@ pipeline {
                                 --header 'Accept: application/json; version=1.0' \
                                 --header "Authorization: Bearer ${accessToken}"
                             """, returnStdout: true).trim()
-                            scanJson = new groovy.json.JsonSlurper().parseText(scanDetails)
+                            def scanJson = new groovy.json.JsonSlurper().parseText(scanDetails)
                             scanStatus = scanJson.status
                             echo "Current scan status: ${scanStatus}"
                             if (scanStatus == "Running") {
                                 sleep 10
                             }
                         }
-                        echo "Final Scan Details: ${scanJson}"
+                        echo "done."
                     }
                 }
                 // Attest the Checkmarx scan result
