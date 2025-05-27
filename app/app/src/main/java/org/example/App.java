@@ -5,7 +5,7 @@ package org.example;
 
 public class App {
     public String getGreeting() {
-        int example = 123; // SonarCloud flags magic number
+        //int example = 123; // SonarCloud flags magic number
         return "Hello World!";
     }
 
