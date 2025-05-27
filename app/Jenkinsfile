@@ -13,6 +13,8 @@ pipeline {
         DOCKER_API_VERSION = '1.44'
         CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
+        CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
+        CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
     }
     agent any
 
@@ -80,7 +82,7 @@ pipeline {
             }
         }
 
-       /* stage('Checkmarx Scan') {
+       stage('Checkmarx Scan') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
@@ -103,30 +105,37 @@ pipeline {
                         def jsonResponse = new groovy.json.JsonSlurper().parseText(response)
                         def accessToken = jsonResponse.access_token
 
-                        def scanResponse = sh(script: """
+                        def scanCreationResponse = sh(script: """
                             curl --request POST \
-                            --url https://ast.checkmarx.net/api/scans/ \
-                            --header 'Accept: application/json; version=1.0' \
-                            --header 'Authorization: Bearer ${accessToken}' \
+                            https://deu.ast.checkmarx.net/api/scans/ \
+                            --header 'Accept: application/json' \
+                            --header "Authorization: Bearer ${access_token}" \
                             --header 'Content-Type: application/json; version=1.0' \
-                            --header 'CorrelationId: ' \
                             --data '{
-                            "type": "upload",
-                            "project": {
-                                "id": "kosli-dev/jenkins-java-example"
-                            },
-                            "config": [
-                                {
-                                "type": "sca",
-                                "value": {
-                                    "incremental": "true",
-                                    "presetName": "Default"
-                                }
-                                }
-                            ]
+                                "project": { 
+                                    "id": "${CX_PROJECT_ID}" 
+                                },
+                                "type": "git",
+                                "handler": {
+                                    "repoUrl": "${CX_REPO_URL}",
+                                    "branch": "develop"
+                                },
+                                "config": [
+                                    {
+                                        "type": "sca",
+                                        "value": {
+                                            "incremental": "true",
+                                            "presetName": "Default"
+                                        }
+                                    }
+                                ]
                             }'
                         """, returnStdout: true).trim()
-                        echo "Scan creation response: ${scanResponse}"
+                        echo "Scan creation response: ${scanCreationResponse}"
+
+                        def jsonResponse = new groovy.json.JsonSlurper().parseText(scanCreationResponse)
+                        def scanId = jsonResponse.id
+                        echo "Scan ID: ${scanId}"
                     }
                 }
                 // Attest the Checkmarx scan result
@@ -140,7 +149,6 @@ pipeline {
                 ''' 
             }
         }
-        */
 
         stage('SonarCloud analysis') {
             when {
