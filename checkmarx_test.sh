@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export CX_REFRESH_TOKEN="REFRESH TOKEN HERE"
+export CX_REFRESH_TOKEN="REFRESH_TOKEN_HERE"
 
 response=$(curl -X POST \
     https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
@@ -22,17 +22,16 @@ curl --request POST \
     --header "Authorization: Bearer ${access_token}" \
     --header 'Content-Type: application/json; version=1.0' \
     --data '{ \
-    "type": "git", \
+    "sourceType": "repository", \
     "project": { \
-        "id": "kosli-dev/jenkins-java-example" \
+        "id": "0af76263-3d75-482c-ae9e-171b7d046e7c" \
     }, \
-    "config": [ \
-        { \
-        "type": "sca", \
-        "value": { \
-            "incremental": "true", \
-            "presetName": "Default" \
-        } \
-        } \
-    ] \
+    "repository": { \
+        "url": "https://github.com/kosli-dev/jenkins-java-example", \
+        "branch": "develop" \
+    }, \
+    "scanSettings": { \
+      "scanType": "full", \
+      "incremental": false \
+    } \
 }'
