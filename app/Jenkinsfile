@@ -145,7 +145,8 @@ pipeline {
                         """, returnStdout: true).trim()
 
                         echo "Checkmarx compare result: ${compareResult}"
-                        def status = new groovy.json.JsonSlurper().parseText(compareResult).status
+                        def parsed = new groovy.json.JsonSlurper().parseText(compareResult)
+                        def status = parsed.results[0]?.status
                         echo "Checkmarx compare status: ${status}"
 
                         if (status == "RECURRENT" || status == "FIXED") {
