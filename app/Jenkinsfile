@@ -64,6 +64,11 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
+                // - authenticate with checkmarx
+                // - trigger async scan
+                // - get results from scan via its ID
+                // - attest scan result
+                // - assert scan result
                 dir('app') {
                     script {
                         def response = sh(script: """
@@ -144,25 +149,19 @@ pipeline {
                         def status = parsed.results[0]?.status
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
                         def userData = groovy.json.JsonOutput.toJson(parsed)
-                        // Write the JSON to a file in the workspace root
-                        writeFile file: "../checkmarx_compare_result.json", text: userData
-
-                
+                        writeFile file: "${env.WORKSPACE}/checkmarx_compare_result.json", text: userData
+                        echo "Checkmarx compare result written to ${env.WORKSPACE}/checkmarx_compare_result.json"
                     }
                 }
                 // Now run kosli from the repo root, referencing the file
-                script {
-                    // Read the compliance value from the file or pass it as a parameter
-                    def cxCompliant = sh(script: "cat checkmarx_compare_result.json | jq -r '.results[0].status' | grep -E 'RECURRENT|FIXED' && echo true || echo false", returnStdout: true).trim()
-                    sh """
-                        kosli attest generic \
-                            --flow jenkins-java-example \
-                            --trail \$GIT_COMMIT \
-                            --name checkmarx-compare \
-                            --user-data checkmarx_compare_result.json \
-                            --compliant=${cxCompliant}
-                    """
-                }
+                sh """
+                    kosli attest generic \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name checkmarx-compare \
+                        --user-data ".checkmark/cx_scan_result_${CX_COMPLIANT}" \
+                        --compliant="${CX_COMPLIANT}" \
+                """
             }
         }
 
