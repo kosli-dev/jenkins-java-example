@@ -158,13 +158,16 @@ pipeline {
                     }
                 }
                 // Attest the Checkmarx scan result
+
+                def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
+                               
                 sh '''
                     kosli attest generic \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-compare \
-                        --user-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANT}.json \
-                        --compliant=${CX_COMPLIANT}
+                        --user-data ${parsed} \
+                        --compliant=${cxCompliant}
                 ''' 
             }
         }
