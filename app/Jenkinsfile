@@ -150,21 +150,28 @@ pipeline {
                         echo "Checkmarx compare status: ${status}"
 
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
-                        echo "Checkmarx compliance status: ${cxCompliant}"
-                        
+
+                        sh """
+                            kosli attest generic \
+                                --flow jenkins-java-example \
+                                --trail \$GIT_COMMIT \
+                                --name checkmarx-compare \
+                                --user-data '${parsed}' \
+                                --compliant=${cxCompliant}
+                        """
                     }
                 }
-                // Attest the Checkmarx scan result
+                // Attesting above the Checkmarx scan result
 
                                            
-                sh '''
-                    kosli attest generic \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name checkmarx-compare \
-                        --user-data ${parsed} \
-                        --compliant=${cxCompliant}
-                ''' 
+                // sh '''
+                //     kosli attest generic \
+                //         --flow jenkins-java-example \
+                //         --trail $GIT_COMMIT \
+                //         --name checkmarx-compare \
+                //         --user-data ${parsed} \
+                //         --compliant=${cxCompliant}
+                // ''' 
             }
         }
 
