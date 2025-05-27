@@ -157,7 +157,7 @@ pipeline {
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-compare \
-                        --user-data ".checkmark/cx_scan_result_${CX_COMPLIANT}" \
+                        --user-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANT}.json \
                         --compliant="${CX_COMPLIANT}" \
                 """
             }
