@@ -98,7 +98,7 @@ pipeline {
                                 },
                                 "config": [
                                     {
-                                        "type": "sca",
+                                        "type": "container-security",
                                         "value": {
                                             "incremental": "true",
                                             "presetName": "Default"
