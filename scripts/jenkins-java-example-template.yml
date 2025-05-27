@@ -3,8 +3,8 @@ trail:
   attestations:
   - name: snyk-scan
     type: custom:custom-snyk-scan
-  - name: checkmarx-scan
-    type: custom:checkmarx-scan
+  - name: checkmarx-compare
+    type: generic
   artifacts:
   - name: jarfile
   - name: docker-image
