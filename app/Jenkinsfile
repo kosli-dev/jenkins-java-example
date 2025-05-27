@@ -110,6 +110,11 @@ pipeline {
                         def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
                         echo "Scan ID: ${scanId}"
 
+                        @NonCPS
+                        def sleepTen() {
+                            echo "Sleeping for 10 seconds..."
+                            sleep 10
+                        }
                         // Poll for scan completion
                         def scanStatus = "Running"
                         def scanDetails = ""
@@ -125,7 +130,7 @@ pipeline {
                             // echo "Current scan status: ${scanStatus}"
                             if (scanStatus == "Running") {
                                 echo "Going to wait for 10 seconds before checking again..."
-                                sleep 10
+                                sleepTen()
                                 echo "Waiting for scan to complete..."
                             }
                         }
