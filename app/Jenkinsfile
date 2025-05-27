@@ -98,9 +98,9 @@ pipeline {
                                 },
                                 "config": [
                                     {
-                                        "type": "container-security",
+                                        "type": "sast",
                                         "value": {
-                                            "incremental": "true",
+                                            "incremental": "false",
                                             "presetName": "Default"
                                         }
                                     }
