@@ -71,11 +71,6 @@ pipeline {
                 // - assert scan result
                 dir('app') {
                     script {
-                        def sleepTen() {
-                            echo "Sleeping for 10 seconds..."
-                            sleep(10)
-                        }
-
                         def response = sh(script: """
                             curl -X POST \
                             https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
@@ -130,7 +125,7 @@ pipeline {
                             // echo "Current scan status: ${scanStatus}"
                             if (scanStatus == "Running") {
                                 echo "Going to wait for 10 seconds before checking again..."
-                                sleepTen()
+                                sleep(10)
                                 echo "Waiting for scan to complete..."
                             }
                         }
