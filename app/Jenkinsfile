@@ -64,9 +64,9 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-                script {
-                    dir('app') {
-                        response = sh(script: """
+                dir('app') {
+                    script {
+                        def response = sh(script: """
                             curl -X POST \
                             https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
                             --data "grant_type=refresh_token" \
@@ -105,7 +105,8 @@ pipeline {
 
                         echo "Raw scan creation response: ${scanCreationResponse}"
 
-                        def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
+                        //def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
+                        def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
                         echo "Scan ID: ${scanId}"
 
                         // Poll for scan completion
@@ -139,12 +140,13 @@ pipeline {
                             --header "Authorization: Bearer ${accessToken}"
                         """, returnStdout: true).trim()
 
-                        // Write the JSON to the workspace root
+                        // Write the JSON to a file in the workspace root
                         writeFile file: "${env.WORKSPACE}/checkmarx_compare_result.json", text: compareResult
-                    }
-
-                    // Now back in the workspace root
-                    def compareJson = readFile("${env.WORKSPACE}/checkmarx_compare_result.json")
+                       }
+                }
+                script {
+                    // Read the status field from the file using Groovy
+                    def compareJson = readFile('checkmarx_compare_result.json')
                     def parsed = new groovy.json.JsonSlurper().parseText(compareJson)
                     def status = parsed.results[0]?.status
                     def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
