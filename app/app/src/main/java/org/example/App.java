@@ -5,17 +5,7 @@ package org.example;
 
 public class App {
     public String getGreeting() {
-       // to show sonar failing we need remove the comment block around
-       // the try and catch block below by removing the /* and */ characters
-
-       /* 
-        try {
-            int x = 1 / 0;
-        } catch (Exception e) {
-            e.printStackTrace();  
-        }
-        */
-
+        //int example = 123; // SonarCloud flags magic number
         return "Hello World!";
     }
 
