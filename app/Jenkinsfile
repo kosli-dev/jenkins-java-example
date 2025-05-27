@@ -147,32 +147,24 @@ pipeline {
                         echo "Checkmarx compare result: ${compareResult}"
                         def parsed = new groovy.json.JsonSlurper().parseText(compareResult)
                         def status = parsed.results[0]?.status
-                        echo "Checkmarx compare status: ${status}"
-
                         def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
-
                         def userData = groovy.json.JsonOutput.toJson(parsed)
-                        sh """
-                            kosli attest generic \
-                                --flow jenkins-java-example \
-                                --trail \$GIT_COMMIT \
-                                --name checkmarx-compare \
-                                --user-data '${userData}' \
-                                --compliant=${cxCompliant}
-                        """
+                        // Save to environment for use outside 'app'
+                        env.CX_COMPLIANT = cxCompliant
+                        env.CX_USER_DATA = userData
                     }
                 }
                 // Attesting above the Checkmarx scan result
 
                                            
-                // sh '''
-                //     kosli attest generic \
-                //         --flow jenkins-java-example \
-                //         --trail $GIT_COMMIT \
-                //         --name checkmarx-compare \
-                //         --user-data ${parsed} \
-                //         --compliant=${cxCompliant}
-                // ''' 
+                sh """
+                    kosli attest generic \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name checkmarx-compare \
+                        --user-data '${CX_USER_DATA}' \
+                        --compliant=${CX_COMPLIANT}
+                """
             }
         }
 
