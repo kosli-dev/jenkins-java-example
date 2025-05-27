@@ -135,7 +135,7 @@ pipeline {
                         }
                         echo "done."
                       
-                        def baseScanId = "182a6054-6eca-474d-bdcf-e4b5c9348ff0" // Set your base scan ID here
+                        def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e" // Set your base scan ID here
 
                         def compareResult = sh(script: """
                             curl --silent --request GET \
