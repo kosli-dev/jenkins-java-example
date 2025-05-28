@@ -5,8 +5,7 @@ package org.example;
 
 public class App {
     public String getGreeting() {
-        // int example = 123; // SonarCloud flags magic number 
-        String password = "opentextpassword";
+        String password = "opentextpassword"; //For Demo - fails sonar and vulnerability raised in Snyk.
         return "Hello World!!";
     }
 
