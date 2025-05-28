@@ -7,7 +7,7 @@ pipeline {
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
-        SNYK_TOKEN = credentials('snyk-api-token')
+        SNYK_TOKEN = credentials('snyk-token-kosli')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
@@ -171,8 +171,8 @@ pipeline {
                 dir('app') {
                     // Run the Snyk scan
                     sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1 --sarif-file-output=snyk-code-test.json'
-                    sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
+                    sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json'
+                    sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde'
                     
                 }
                 sh '''
