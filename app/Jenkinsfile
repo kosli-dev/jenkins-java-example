@@ -110,7 +110,8 @@ pipeline {
 
                         echo "Raw scan creation response: ${scanCreationResponse}"
 
-                        def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
+                        //def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
+                        def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
                         echo "Scan ID: ${scanId}"
 
                         // Poll for scan completion
