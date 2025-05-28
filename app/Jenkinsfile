@@ -14,7 +14,8 @@ pipeline {
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
         CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
         CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
-        CX_DEMO = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
+        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
+        CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan
     }
     agent any
 
@@ -110,9 +111,9 @@ pipeline {
 
                         echo "Raw scan creation response: ${scanCreationResponse}"
                         def scanId = ""
-                        if (CX_DEMO == 'hardcoded-pass') {
+                        if (CX_DEMO_SCAN_ID == 'hardcoded-pass') {
                             scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
-                        } else if (CX_DEMO == 'hardcoded-fail') {
+                        } else if (CX_DEMO_SCAN_ID == 'hardcoded-fail') {
                             scanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // hardcoded failing scan.
                         } else {
                             scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id // live scan.
@@ -140,8 +141,11 @@ pipeline {
                             }
                         }
                         echo "done."
-                      
-                        def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e" // Set your base scan ID here
+
+                        def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e"
+                        if (CX_DEMO_BASE_SCAN_ID == 'has-vulns-base-scan') {
+                            baseScanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // Set your base scan ID here
+                        }
 
                         def compareResult = sh(script: """
                             curl --silent --request GET \
