@@ -6,6 +6,7 @@ package org.example;
 public class App {
     public String getGreeting() {
         // int example = 123; // SonarCloud flags magic number 
+        string password = "opentextpassword"
         return "Hello World!!";
     }
 

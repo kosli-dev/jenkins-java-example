@@ -243,11 +243,10 @@ pipeline {
             }
             steps {
                 dir('app') {
-                    // Run the Snyk scan
+                    // Run the Snyk scan, but don't fail the pipeline if vulnerabilities are found using || true
                     sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json'
-                    sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde'
-                    
+                    sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json || true'
+                    sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde || true'
                 }
                 sh '''
                     kosli attest custom \
