@@ -144,14 +144,16 @@ pipeline {
                             --header 'Accept: application/json; version=1.0' \
                             --header "Authorization: Bearer ${accessToken}"
                         """, returnStdout: true).trim()
-
+                        writeFile file: "../checkmarx_compare_result.json", text: compareResult
                         echo "Checkmarx compare result: ${compareResult}"
-                        def parsed = new groovy.json.JsonSlurper().parseText(compareResult)
-                        def status = parsed.results[0]?.status
-                        def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
-                        def userData = groovy.json.JsonOutput.toJson(parsed)
+                        // def parsed = new groovy.json.JsonSlurper().parseText(compareResult)
+                        // def status = parsed.results[0]?.status
+                        // def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
+                        // def userData = groovy.json.JsonOutput.toJson(parsed)
+
                        }
                 }
+                echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
                 // Now run kosli from the repo root, referencing the file
                 sh """
                     kosli attest generic \
