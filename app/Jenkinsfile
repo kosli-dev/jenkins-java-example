@@ -154,6 +154,24 @@ pipeline {
                             baseScanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // Set your base scan ID here
                         }
 
+                        echo "Getting current scan details: ${scanId}"
+                        def currentScanDetails = sh(script: """
+                            curl --request GET \
+                            --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
+                            --header 'Accept: application/json; version=1.0' \
+                            --header "Authorization: Bearer ${accessToken}"
+                        """, returnStdout: true).trim()
+                        writeFile file: "../checkmarx_current_scan_details.json", text: currentScanDetails
+
+                        echo "Getting base scan details: ${baseScanId}"
+                        def baseScanDetails = sh(script: """
+                            curl --request GET \
+                            --url https://deu.ast.checkmarx.net/api/scans/${baseScanId} \
+                            --header 'Accept: application/json; version=1.0' \
+                            --header "Authorization: Bearer ${accessToken}"
+                        """, returnStdout: true).trim()
+                        writeFile file: "../checkmarx_base_scan_details.json", text: baseScanDetails
+
                         def compareResult = sh(script: """
                             curl --silent --request GET \
                             --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
@@ -212,6 +230,7 @@ pipeline {
                             --trail \$GIT_COMMIT \
                             --name checkmarx-compare \
                             --user-data checkmarx_compare_result.json \
+                            --attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \
                             --compliant=${cxCompliant}
                     """
                 }
