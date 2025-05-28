@@ -109,13 +109,13 @@ pipeline {
                         """, returnStdout: true).trim()
 
                         echo "Raw scan creation response: ${scanCreationResponse}"
-
+                        def scanId = ""
                         if (CX_DEMO == 'hardcoded-pass') {
-                            def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
+                            scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
                         } else if (CX_DEMO == 'hardcoded-fail') {
-                            def scanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // hardcoded failing scan.
+                            scanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // hardcoded failing scan.
                         } else {
-                            def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id // live scan.
+                            scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id // live scan.
                         }
                         echo "Scan ID: ${scanId}"
 
