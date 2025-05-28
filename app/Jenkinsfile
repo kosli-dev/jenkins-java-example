@@ -155,12 +155,26 @@ pipeline {
                 }
                 echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
                 script {
-            // Extract status using grep/sed (works for simple JSON)
-                    def status = sh(
-                        script: "grep -o '\"status\"[ ]*:[ ]*\"[A-Z]*\"' checkmarx_compare_result.json | head -1 | sed 's/.*: *\"\\([A-Z]*\\)\"/\\1/'",
+                    // Extract all statuses and check if any are NEW
+                    def statuses = sh(
+                        script: "grep -o '\"status\"[ ]*:[ ]*\"[A-Z]*\"' checkmarx_compare_result.json | sed 's/.*: *\"\\([A-Z]*\\)\"/\\1/'",
                         returnStdout: true
                     ).trim()
-                    def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
+                    
+                    def cxCompliant = false
+                    
+                    // Only check for NEW status if we found some statuses
+                    if (!statuses.isEmpty()) {
+                        def statusArray = statuses.split('\n')
+                        def hasNewVulnerabilities = false
+                        for (status in statusArray) {
+                            if (status == "NEW") {
+                                hasNewVulnerabilities = true
+                                break
+                            }
+                        }
+                        cxCompliant = !hasNewVulnerabilities
+                    }
 
                     sh """
                         kosli attest generic \
