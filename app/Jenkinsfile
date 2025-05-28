@@ -154,15 +154,23 @@ pipeline {
                        }
                 }
                 echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
-                // Now run kosli from the repo root, referencing the file
-                sh """
-                    kosli attest generic \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name checkmarx-compare \
-                        --user-data checkmarx_compare_result.json  \
-                        --compliant="${CX_COMPLIANT}" \
-                """
+                script {
+            // Extract status using grep/sed (works for simple JSON)
+                    def status = sh(
+                        script: "grep -o '\"status\"[ ]*:[ ]*\"[A-Z]*\"' checkmarx_compare_result.json | head -1 | sed 's/.*: *\"\\([A-Z]*\\)\"/\\1/'",
+                        returnStdout: true
+                    ).trim()
+                    def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
+
+                    sh """
+                        kosli attest generic \
+                            --flow jenkins-java-example \
+                            --trail \$GIT_COMMIT \
+                            --name checkmarx-compare \
+                            --user-data checkmarx_compare_result.json \
+                            --compliant=${cxCompliant}
+                    """
+                }
             }
         }
 
