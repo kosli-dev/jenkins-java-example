@@ -11,10 +11,10 @@ pipeline {
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
-        CX_COMPLIANT = 'true' // Hardwired for demo purposes
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
         CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
         CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
+        CX_DEMO = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
     }
     agent any
 
@@ -110,8 +110,13 @@ pipeline {
 
                         echo "Raw scan creation response: ${scanCreationResponse}"
 
-                        def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id
-                        //def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
+                        if (CX_DEMO == 'hardcoded-pass') {
+                            def scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
+                        } else if (CX_DEMO == 'hardcoded-fail') {
+                            def scanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // hardcoded failing scan.
+                        } else {
+                            def scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id // live scan.
+                        }
                         echo "Scan ID: ${scanId}"
 
                         // Poll for scan completion
