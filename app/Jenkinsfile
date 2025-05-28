@@ -14,6 +14,13 @@ pipeline {
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
         CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
         CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
+
+        // Demo Toggles for Checkmarx scan
+
+        CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
+        
+        // The two options below are demo toggles for the checkmarx comparison and allow you to choose which baseline to be 
+        // compared against and for the current build whether you want to wait for the live scan or use hardcoded pass or fail results.
         CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
         CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan
     }
@@ -163,6 +170,20 @@ pipeline {
                        }
                 }
                 echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
+
+                
+               sh """
+                    kosli attest custom \
+                        --type checkmarx-scan \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name checkmarx-scan \
+                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                """ 
+            
+
+
+
                 script {
                     // Extract all statuses and check if any are NEW
                     def statuses = sh(
