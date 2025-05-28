@@ -178,7 +178,7 @@ pipeline {
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-scan \
-                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
+                        --attestation-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANCE}.json
                 """ 
             
 
