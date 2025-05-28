@@ -157,7 +157,7 @@ pipeline {
                         echo "Getting current scan details: ${scanId}"
                         def currentScanDetails = sh(script: """
                             curl --request GET \
-                            --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
+                            --url https://deu.ast.checkmarx.net/api/sast-results/?scan-id=${scanId} \
                             --header 'Accept: application/json; version=1.0' \
                             --header "Authorization: Bearer ${accessToken}"
                         """, returnStdout: true).trim()
@@ -166,7 +166,7 @@ pipeline {
                         echo "Getting base scan details: ${baseScanId}"
                         def baseScanDetails = sh(script: """
                             curl --request GET \
-                            --url https://deu.ast.checkmarx.net/api/scans/${baseScanId} \
+                            --url https://deu.ast.checkmarx.net/api/sast-results/?scan-id=${baseScanId} \
                             --header 'Accept: application/json; version=1.0' \
                             --header "Authorization: Bearer ${accessToken}"
                         """, returnStdout: true).trim()
