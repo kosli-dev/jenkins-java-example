@@ -21,7 +21,7 @@ pipeline {
         
         // The two options below are demo toggles for the checkmarx comparison and allow you to choose which baseline to be 
         // compared against and for the current build whether you want to wait for the live scan or use hardcoded pass or fail results.
-        CX_DEMO_SCAN_ID = 'live-scan' // Options: live-scan, hardcoded-pass, hardcoded-fail
+        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
         CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan
     }
     agent any
