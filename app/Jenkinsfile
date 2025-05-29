@@ -14,12 +14,12 @@ pipeline {
         CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
         CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
         CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
-        // Demo Toggles for Checkmarx scan
+       
+        // Demo Settings 
+        
         CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
-        // The two options below are demo toggles for the checkmarx comparison and allow you to choose which baseline to be 
-        // compared against and for the current build whether you want to wait for the live scan or use hardcoded pass or fail results.
-        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail
-        CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan
+        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
+        CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan. Used for comparison.
         SNYK_CRITICAL_VULNERABILITIES = 'false' // This is the file that will be used for the Snyk scan attestation.
     }
     agent any
@@ -178,11 +178,6 @@ pipeline {
                         """, returnStdout: true).trim()
                         writeFile file: "../checkmarx_compare_result.json", text: compareResult
                         echo "Checkmarx compare result: ${compareResult}"
-                        // def parsed = new groovy.json.JsonSlurper().parseText(compareResult)
-                        // def status = parsed.results[0]?.status
-                        // def cxCompliant = (status == "RECURRENT" || status == "FIXED") ? "true" : "false"
-                        // def userData = groovy.json.JsonOutput.toJson(parsed)
-
                        }
                 }
                 echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
