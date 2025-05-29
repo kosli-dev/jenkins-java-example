@@ -240,26 +240,29 @@ pipeline {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
-                dir('app') {
-                    // Run the Snyk scan, but don't fail the pipeline if vulnerabilities are found using || true
-                    sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json || true'
-                    sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde || true'
-                }
+                script {
+                 
+                    dir('app') {
+                        // Run the Snyk scan, but don't fail the pipeline if vulnerabilities are found using || true
+                        sh 'snyk auth $SNYK_TOKEN'
+                        sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json || true'
+                        sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde || true'
+                    }
 
-                def attestationData = 'app/snyk-code-test.json'
-                if (env.SNYK_CRITICAL_VULNERABILITIES == 'true') {
-                attestationData = '.snykFakeResult/snyk-code-test-critical.json'
-                }
+                    def attestationData = 'app/snyk-code-test.json'
+                    if (env.SNYK_CRITICAL_VULNERABILITIES == 'true') {
+                    attestationData = '.snykFakeResult/snyk-code-test-critical.json'
+                    }
 
-                sh """
-                    kosli attest custom \
-                        --type custom-snyk-scan \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name snyk-scan \
-                        --attestation-data ${attestationData} 
-                """ 
+                    sh """
+                        kosli attest custom \
+                            --type custom-snyk-scan \
+                            --flow jenkins-java-example \
+                            --trail $GIT_COMMIT \
+                            --name snyk-scan \
+                            --attestation-data ${attestationData} 
+                    """ 
+                }
             }
         }
 
