@@ -248,13 +248,16 @@ pipeline {
                     sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json || true'
                     sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde || true'
                 }
+
+                // app/snyk-code-test.json
+
                 sh '''
                     kosli attest custom \
                         --type custom-snyk-scan \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name snyk-scan \
-                        --attestation-data app/snyk-code-test.json
+                        --attestation-data .snykFakeResult/snyk-code-test-critical.json
                 ''' 
             }
         }

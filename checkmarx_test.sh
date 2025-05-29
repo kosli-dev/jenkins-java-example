@@ -1,6 +1,8 @@
 #!/bin/sh
 
-export CX_REFRESH_TOKEN="TOKEN"
+
+
+export CX_REFRESH_TOKEN="TOKEN in One PAssword - Alex Test API Key"
 
 response=$(curl -X POST \
     https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
@@ -9,6 +11,7 @@ response=$(curl -X POST \
     --data "refresh_token=${CX_REFRESH_TOKEN}")
 
 accessToken=$(echo $response | jq -r '.access_token')
+
 
 # curl --request GET \
 #   https://deu.ast.checkmarx.net/api/projects/ \
@@ -64,10 +67,4 @@ result=$(curl --silent --request GET \
     --header 'Accept: application/json; version=1.0' \
     --header "Authorization: Bearer ${accessToken}")
 
-status=$(echo "$result" | jq -r '.status')
 
-if [ "$status" = "RECURRENT" ] || [ "$status" = "FIXED" ]; then
-    echo "true"
-else
-    echo "false"
-fi
