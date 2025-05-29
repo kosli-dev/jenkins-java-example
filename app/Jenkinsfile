@@ -18,7 +18,7 @@ pipeline {
         // Demo Settings 
         
         CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
-        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
+        CX_DEMO_SCAN_ID = 'live-scan' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
         CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan. Used for comparison.
         SNYK_CRITICAL_VULNERABILITIES = 'false' // This is the file that will be used for the Snyk scan attestation.
     }
@@ -189,9 +189,10 @@ pipeline {
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-scan \
-                        --attestation-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANCE}.json
+                        --attestation-data checkmarx_current_scan_details.json
                 """ 
-            
+                                    // --attestation-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANCE}.json
+
 
 
 
