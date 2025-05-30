@@ -18,8 +18,9 @@ pipeline {
         // Demo Settings 
         
         CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
-        CX_DEMO_SCAN_ID = 'harcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
+        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
         CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan. Used for comparison.
+        CX_DEMO_COMPARE_RESULT = 'new_critical' // Options: live-compare, new_critical, new_medium, recurrent_critical. Used for comparison results.
         SNYK_CRITICAL_VULNERABILITIES = 'false' // This is the file that will be used for the Snyk scan attestation.
     }
     agent any
@@ -147,40 +148,51 @@ pipeline {
                         }
                         echo "done."
 
-                        def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e"
-                        if (CX_DEMO_BASE_SCAN_ID == 'has-vulns-base-scan') {
-                            baseScanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // Set your base scan ID here
-                        }
+                        if (CX_DEMO_COMPARE_RESULT == 'live-compare') {
+                            def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e"
+                            if (CX_DEMO_BASE_SCAN_ID == 'has-vulns-base-scan') {
+                                baseScanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // Set your base scan ID here
+                            }
 
-                        echo "Getting current scan details: ${scanId}"
-                        def currentScanDetails = sh(script: """
-                            curl --request GET \
-                            --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${scanId} \
-                            --header 'Accept: application/json; version=1.0' \
-                            --header "Authorization: Bearer ${accessToken}"
-                        """, returnStdout: true).trim()
-                        writeFile file: "../checkmarx_current_scan_details.json", text: currentScanDetails
+                            echo "Getting current scan details: ${scanId}"
+                            def currentScanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${scanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_current_scan_details.json", text: currentScanDetails
 
-                        echo "Getting base scan details: ${baseScanId}"
-                        def baseScanDetails = sh(script: """
-                            curl --request GET \
-                            --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${baseScanId} \
-                            --header 'Accept: application/json; version=1.0' \
-                            --header "Authorization: Bearer ${accessToken}"
-                        """, returnStdout: true).trim()
-                        writeFile file: "../checkmarx_base_scan_details.json", text: baseScanDetails
+                            echo "Getting base scan details: ${baseScanId}"
+                            def baseScanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${baseScanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_base_scan_details.json", text: baseScanDetails
 
-                        def compareResult = sh(script: """
-                            curl --silent --request GET \
-                            --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
-                            --header 'Accept: application/json; version=1.0' \
-                            --header "Authorization: Bearer ${accessToken}"
-                        """, returnStdout: true).trim()
-                        writeFile file: "../checkmarx_compare_result.json", text: compareResult
-                        echo "Checkmarx compare result: ${compareResult}"
+                            def compareResult = sh(script: """
+                                curl --silent --request GET \
+                                --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_compare_result.json", text: compareResult
+                            echo "Checkmarx compare result: ${compareResult}"
                        }
+                    }
                 }
-                echo "Contents of written file: " + readFile("checkmarx_compare_result.json")
+
+                compare_result_file = "checkmarx_compare_result.json"
+                if (CX_DEMO_COMPARE_RESULT == 'new_critical') {
+                    compare_result_file = ".checkmarx/cx_compare_result_new_critical.json"
+                } else if (CX_DEMO_COMPARE_RESULT == 'new_medium') {
+                    compare_result_file = ".checkmarx/cx_compare_result_new_medium.json"
+                } else if (CX_DEMO_COMPARE_RESULT == 'recurrent_critical') {
+                    compare_result_file = ".checkmarx/cx_compare_result_recurrent_critical.json"
+                }
+                echo "Contents of written file: " + readFile(compare_result_file)
 
                 
                sh """
@@ -193,29 +205,18 @@ pipeline {
                 """ 
 
 
-
-
-
                 script {
-                    // Extract all statuses and check if any are NEW
-                    def statuses = sh(
-                        script: "grep -o '\"status\"[ ]*:[ ]*\"[A-Z]*\"' checkmarx_compare_result.json | sed 's/.*: *\"\\([A-Z]*\\)\"/\\1/'",
+                    // Extract entries that have NEW status and check if they are CRITICAL or HIGH
+                    def criticalOrHighNewVulns = sh(
+                        script: "jq '[.results[] | select(.status == \"NEW\" and (.severity == \"CRITICAL\" or .severity == \"HIGH\"))] | length' ${compare_result_file}",
                         returnStdout: true
                     ).trim()
                     
-                    def cxCompliant = false
-                    
-                    // Only check for NEW status if we found some statuses
-                    if (!statuses.isEmpty()) {
-                        def statusArray = statuses.split('\n')
-                        def hasNewVulnerabilities = false
-                        for (status in statusArray) {
-                            if (status == "NEW") {
-                                hasNewVulnerabilities = true
-                                break
-                            }
-                        }
-                        cxCompliant = !hasNewVulnerabilities
+                    def cxCompliant = criticalOrHighNewVulns == "0"
+
+                    def attachmentsFlag = ""
+                    if (CX_DEMO_COMPARE_RESULT == 'live-compare') {
+                        attachmentsFlag = "--attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \\"
                     }
 
                     sh """
@@ -223,8 +224,8 @@ pipeline {
                             --flow jenkins-java-example \
                             --trail \$GIT_COMMIT \
                             --name checkmarx-compare \
-                            --user-data checkmarx_compare_result.json \
-                            --attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \
+                            --user-data ${compare_result_file} \
+                            ${attachmentsFlag}
                             --compliant=${cxCompliant}
                     """
                 }
