@@ -215,18 +215,27 @@ pipeline {
 
                     def attachmentsFlag = ""
                     if (CX_DEMO_COMPARE_RESULT == 'live-compare') {
-                        attachmentsFlag = "--attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \\"
-                    }
-
-                    sh """
+                        sh """
                         kosli attest generic \
                             --flow jenkins-java-example \
                             --trail \$GIT_COMMIT \
                             --name checkmarx-compare \
                             --user-data ${compare_result_file} \
-                            ${attachmentsFlag}
+                            --attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \
                             --compliant=${cxCompliant}
-                    """
+                        """
+                    } else {
+                        // If not live compare, don't add actual scan results as attachments since they are not 
+                        // relevant for the hard-coded comparison results.
+                        sh """
+                        kosli attest generic \
+                            --flow jenkins-java-example \
+                            --trail \$GIT_COMMIT \
+                            --name checkmarx-compare \
+                            --user-data ${compare_result_file} \
+                            --compliant=${cxCompliant}
+                        """
+                    }
                 }
             }
         }
