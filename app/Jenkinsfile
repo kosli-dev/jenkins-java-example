@@ -180,22 +180,12 @@ pipeline {
                             """, returnStdout: true).trim()
                             writeFile file: "../checkmarx_compare_result.json", text: compareResult
                             echo "Checkmarx compare result: ${compareResult}"
-                       }
+                        }
                     }
                 }
 
-                compare_result_file = "checkmarx_compare_result.json"
-                if (CX_DEMO_COMPARE_RESULT == 'new_critical') {
-                    compare_result_file = ".checkmarx/cx_compare_result_new_critical.json"
-                } else if (CX_DEMO_COMPARE_RESULT == 'new_medium') {
-                    compare_result_file = ".checkmarx/cx_compare_result_new_medium.json"
-                } else if (CX_DEMO_COMPARE_RESULT == 'recurrent_critical') {
-                    compare_result_file = ".checkmarx/cx_compare_result_recurrent_critical.json"
-                }
-                echo "Contents of written file: " + readFile(compare_result_file)
-
                 
-               sh """
+                sh """
                     kosli attest custom \
                         --type checkmarx-scan \
                         --flow jenkins-java-example \
@@ -206,6 +196,15 @@ pipeline {
 
 
                 script {
+                    compare_result_file = "checkmarx_compare_result.json"
+                    if (CX_DEMO_COMPARE_RESULT == 'new_critical') {
+                        compare_result_file = ".checkmarx/cx_compare_result_new_critical.json"
+                    } else if (CX_DEMO_COMPARE_RESULT == 'new_medium') {
+                        compare_result_file = ".checkmarx/cx_compare_result_new_medium.json"
+                    } else if (CX_DEMO_COMPARE_RESULT == 'recurrent_critical') {
+                        compare_result_file = ".checkmarx/cx_compare_result_recurrent_critical.json"
+                    }
+                    echo "Contents of written file: " + readFile(compare_result_file)
                     // Extract entries that have NEW status and check if they are CRITICAL or HIGH
                     def criticalOrHighNewVulns = sh(
                         script: "jq '[.results[] | select(.status == \"NEW\" and (.severity == \"CRITICAL\" or .severity == \"HIGH\"))] | length' ${compare_result_file}",
