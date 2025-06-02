@@ -45,12 +45,12 @@ pipeline {
                     sh 'ls -al app/build/libs'
                 }
                 sh '''
-                        kosli attest artifact app/app/build/libs/app.jar \
-	                        --artifact-type file \
-	                        --flow jenkins-java-example \
-	                        --trail $GIT_COMMIT \
-	                        --name jarfile
-                    '''
+                    kosli attest artifact app/app/build/libs/app.jar \
+                        --artifact-type file \
+                        --flow jenkins-java-example \
+                        --trail $GIT_COMMIT \
+                        --name jarfile
+                '''
             }
         }
 
