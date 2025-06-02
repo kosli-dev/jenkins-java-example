@@ -7,11 +7,21 @@ pipeline {
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
-        SNYK_TOKEN = credentials('snyk-api-token')
+        SNYK_TOKEN = credentials('snyk-token-kosli')
         DOCKER_PASSWORD = credentials('docker-hub-pat')
         SHORT_SHA = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         DOCKER_API_VERSION = '1.44'
-        CX_COMPLIANCE = 'compliant'  // 'compliant' or 'non_compliant'
+        CX_REFRESH_TOKEN = credentials('checkmarx-refresh-token')
+        CX_PROJECT_ID = '0af76263-3d75-482c-ae9e-171b7d046e7c'
+        CX_REPO_URL = 'https://github.com/kosli-dev/jenkins-java-example'
+       
+        // Demo Settings 
+        
+        CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
+        CX_DEMO_SCAN_ID = 'hardcoded-pass' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
+        CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan. Used for comparison.
+        CX_DEMO_COMPARE_RESULT = 'recurrent_critical' // Options: live-compare, new_critical, new_medium, recurrent_critical. Used for comparison results.
+        SNYK_CRITICAL_VULNERABILITIES = 'false' // This is the file that will be used for the Snyk scan attestation.
     }
     agent any
 
@@ -56,42 +66,208 @@ pipeline {
             }
         }
 
-        stage('Snyk Scan') {
+       stage('Checkmarx Scan') {
             when {
                 expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
             }
             steps {
+                // - authenticate with checkmarx
+                // - trigger async scan
+                // - get results from scan via its ID
+                // - attest scan result
+                // - assert scan result
                 dir('app') {
-                    // Run the Snyk scan
-                    sh 'snyk auth $SNYK_TOKEN'
-                    sh 'snyk code test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1 --sarif-file-output=snyk-code-test.json'
-                    sh 'snyk test --all-projects --org=b6132233-66fe-49e8-a9ba-9d42cea007f1'
-                    
-                }
-                sh '''
-                    kosli attest custom \
-                        --type custom-snyk-scan \
-                        --flow jenkins-java-example \
-                        --trail $GIT_COMMIT \
-                        --name snyk-scan \
-                        --attestation-data app/snyk-code-test.json
-                ''' 
-            }
-        }
+                    script {
+                        def response = sh(script: """
+                            curl -X POST \
+                            https://deu.iam.checkmarx.net/auth/realms/kosli-nfr/protocol/openid-connect/token \
+                            --data "grant_type=refresh_token" \
+                            --data "client_id=ast-app" \
+                            --data "refresh_token=${CX_REFRESH_TOKEN}"
+                        """, returnStdout: true).trim()
+                        
+                        def accessToken = new groovy.json.JsonSlurper().parseText(response).access_token
 
-        stage('Checkmarx Scan') {
-            when {
-                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
-            }
-            steps {
-               sh '''
+                        def scanCreationResponse = sh(script: """
+                            curl --request POST \
+                            https://deu.ast.checkmarx.net/api/scans/ \
+                            --header 'Accept: application/json' \
+                            --header "Authorization: Bearer ${accessToken}" \
+                            --header 'Content-Type: application/json; version=1.0' \
+                            --data '{
+                                "project": { 
+                                    "id": "${CX_PROJECT_ID}" 
+                                },
+                                "type": "git",
+                                "handler": {
+                                    "repoUrl": "${CX_REPO_URL}",
+                                    "branch": "develop"
+                                },
+                                "config": [
+                                    {
+                                        "type": "sast",
+                                        "value": {
+                                            "incremental": "false",
+                                            "presetName": "All"
+                                        }
+                                    }
+                                ]
+                            }'
+                        """, returnStdout: true).trim()
+
+                        echo "Raw scan creation response: ${scanCreationResponse}"
+                        def scanId = ""
+                        if (CX_DEMO_SCAN_ID == 'hardcoded-pass') {
+                            scanId = "412d9122-ce70-4821-9c68-40acbb0a7abc" // hardcoded for demo or debug purposes.
+                        } else if (CX_DEMO_SCAN_ID == 'hardcoded-fail') {
+                            scanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // hardcoded failing scan.
+                        } else {
+                            scanId = new groovy.json.JsonSlurper().parseText(scanCreationResponse).id // live scan.
+                        }
+                        echo "Scan ID: ${scanId}"
+
+                        // Poll for scan completion
+                        def scanStatus = "Running"
+                        def scanDetails = ""
+                        while (scanStatus == "Running") {
+                            scanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scans/${scanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            echo "Scan details response: ${scanDetails}" // <-- Add this line
+                            def scanJson = new groovy.json.JsonSlurper().parseText(scanDetails)
+                            scanStatus = scanJson.status
+                            // echo "Current scan status: ${scanStatus}"
+                            if (scanStatus == "Running") {
+                                echo "Going to wait for 10 seconds before checking again..."
+                                Thread.sleep(10000)
+                                echo "Waiting for scan to complete..."
+                            }
+                        }
+                        echo "done."
+
+                        if (CX_DEMO_COMPARE_RESULT == 'live-compare') {
+                            def baseScanId = "dcfe44c8-4fd0-445b-a5a3-384cb988791e"
+                            if (CX_DEMO_BASE_SCAN_ID == 'has-vulns-base-scan') {
+                                baseScanId = "87822962-e915-4fa4-85b7-9ffdc33b1559" // Set your base scan ID here
+                            }
+
+                            echo "Getting current scan details: ${scanId}"
+                            def currentScanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${scanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_current_scan_details.json", text: currentScanDetails
+
+                            echo "Getting base scan details: ${baseScanId}"
+                            def baseScanDetails = sh(script: """
+                                curl --request GET \
+                                --url https://deu.ast.checkmarx.net/api/scan-summary/?scan-ids=${baseScanId} \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_base_scan_details.json", text: baseScanDetails
+
+                            def compareResult = sh(script: """
+                                curl --silent --request GET \
+                                --url "https://deu.ast.checkmarx.net/api/sast-results/compare?scan-id=${scanId}&base-scan-id=${baseScanId}" \
+                                --header 'Accept: application/json; version=1.0' \
+                                --header "Authorization: Bearer ${accessToken}"
+                            """, returnStdout: true).trim()
+                            writeFile file: "../checkmarx_compare_result.json", text: compareResult
+                            echo "Checkmarx compare result: ${compareResult}"
+                        }
+                    }
+                }
+
+                
+                sh """
                     kosli attest custom \
                         --type checkmarx-scan \
                         --flow jenkins-java-example \
                         --trail $GIT_COMMIT \
                         --name checkmarx-scan \
-                        --attestation-data .checkmarx/cx_scan_result_${CX_COMPLIANCE}.json
-                ''' 
+                        --attestation-data .checkmarx/cx_scan_result_compliant_${CX_COMPLIANCE}.json
+                """ 
+
+
+                script {
+                    compare_result_file = "checkmarx_compare_result.json"
+                    if (CX_DEMO_COMPARE_RESULT == 'new_critical') {
+                        compare_result_file = ".checkmarx/cx_compare_result_new_critical.json"
+                    } else if (CX_DEMO_COMPARE_RESULT == 'new_medium') {
+                        compare_result_file = ".checkmarx/cx_compare_result_new_medium.json"
+                    } else if (CX_DEMO_COMPARE_RESULT == 'recurrent_critical') {
+                        compare_result_file = ".checkmarx/cx_compare_result_recurrent_critical.json"
+                    }
+                    echo "Contents of written file: " + readFile(compare_result_file)
+                    // Extract entries that have NEW status and check if they are CRITICAL or HIGH
+                    def criticalOrHighNewVulns = sh(
+                        script: "jq '[.results[] | select(.status == \"NEW\" and (.severity == \"CRITICAL\" or .severity == \"HIGH\"))] | length' ${compare_result_file}",
+                        returnStdout: true
+                    ).trim()
+                    
+                    def cxCompliant = criticalOrHighNewVulns == "0"
+
+                    def attachmentsFlag = ""
+                    if (CX_DEMO_COMPARE_RESULT == 'live-compare') {
+                        sh """
+                        kosli attest generic \
+                            --flow jenkins-java-example \
+                            --trail \$GIT_COMMIT \
+                            --name checkmarx-compare \
+                            --user-data ${compare_result_file} \
+                            --attachments checkmarx_current_scan_details.json,checkmarx_base_scan_details.json \
+                            --compliant=${cxCompliant}
+                        """
+                    } else {
+                        // If not live compare, don't add actual scan results as attachments since they are not 
+                        // relevant for the hard-coded comparison results.
+                        sh """
+                        kosli attest generic \
+                            --flow jenkins-java-example \
+                            --trail \$GIT_COMMIT \
+                            --name checkmarx-compare \
+                            --user-data ${compare_result_file} \
+                            --compliant=${cxCompliant}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Snyk Scan') {
+            when {
+                expression { params.DEPLOY_ENV == null || params.DEPLOY_ENV == 'staging' }
+            }
+            steps {
+                script {
+                 
+                    dir('app') {
+                        // Run the Snyk scan, but don't fail the pipeline if vulnerabilities are found using || true
+                        sh 'snyk auth $SNYK_TOKEN'
+                        sh 'snyk code test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde --sarif-file-output=snyk-code-test.json || true'
+                        sh 'snyk test --all-projects --org=fb62bc04-1591-4937-9659-d37c77946dde || true'
+                    }
+
+                    def attestationData = 'app/snyk-code-test.json'
+                    if (env.SNYK_CRITICAL_VULNERABILITIES == 'true') {
+                    attestationData = '.snykFakeResult/snyk-code-test-critical.json'
+                    }
+
+                    sh """
+                        kosli attest custom \
+                            --type custom-snyk-scan \
+                            --flow jenkins-java-example \
+                            --trail $GIT_COMMIT \
+                            --name snyk-scan \
+                            --attestation-data ${attestationData} 
+                    """ 
+                }
             }
         }
 
@@ -102,7 +278,7 @@ pipeline {
             steps {
                 dir('app') {
                     withSonarQubeEnv('SonarQube Cloud') { // Will pick the global server connection you have configured
-                        sh './gradlew sonar'
+                        sh './gradlew sonar -Dsonar.analysis.kosli_flow=jenkins-java-example'
                     }
                 }
             }

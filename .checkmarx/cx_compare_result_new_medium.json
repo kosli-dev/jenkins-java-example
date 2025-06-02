@@ -1,0 +1,41 @@
+{
+    "results": [
+        {
+            "queryID": "17157622918285290309",
+            "queryName": "ESAPI_Banned_API",
+            "severity": "MEDIUM",
+            "cweID": 676,
+            "similarityID": -1171734179,
+            "uniqueID": 0,
+            "nodes": [
+                {
+                    "column": 27,
+                    "fileName": "/app/app/src/main/java/org/example/App.java",
+                    "fullName": "System.out.println",
+                    "length": 1,
+                    "line": 13,
+                    "methodLine": 12,
+                    "name": "println",
+                    "nodeID": 51
+                }
+            ],
+            "confidenceLevel": 0,
+            "group": "Java_Best_Coding_Practice",
+            "compliances": [
+                "PCI DSS v4.0",
+                "MOIS(KISA) Secure Coding 2021",
+                "NIST SP 800-53",
+                "PCI DSS v3.2.1"
+            ],
+            "pathSystemID": "KcDUy4VOtNeIiAu5HYQrelc/22w=",
+            "resultHash": "KcDUy4VOtNeIiAu5HYQrelc/22w=",
+            "languageName": "Java",
+            "firstScanID": "dcfe44c8-4fd0-445b-a5a3-384cb988791e",
+            "firstFoundAt": "2025-05-27T14:37:58Z",
+            "foundAt": "2025-05-27T18:53:15Z",
+            "status": "NEW",
+            "state": "TO_VERIFY"
+        }
+    ],
+    "totalCount": 1
+}
