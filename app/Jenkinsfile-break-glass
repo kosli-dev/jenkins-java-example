@@ -27,13 +27,8 @@ pipeline {
                 }
             }
         }
-        stage('Build') {
+        stage('Attest Artifact') {
             steps {
-                dir('app') {
-                    // Run the Gradle build
-                    sh './gradlew build'
-                    sh 'ls -al app/build/libs'
-                }
                 sh '''
                         kosli attest artifact app/app/build/libs/app.jar \
 	                        --artifact-type file \
@@ -41,6 +36,20 @@ pipeline {
 	                        --trail $GIT_COMMIT \
 	                        --name jarfile
                     '''
+            }
+        }
+
+
+
+
+
+        stage('Build') {
+            steps {
+                dir('app') {
+                    // Run the Gradle build
+                    sh './gradlew build'
+                    sh 'ls -al app/build/libs'
+                }
             }
         }
 
@@ -64,6 +73,20 @@ pipeline {
                     sh "docker push meekrosoft/break-glass-example:${SHORT_SHA}"
                     sh "docker image inspect meekrosoft/break-glass-example:${SHORT_SHA}"
                 }
+                sh '''
+                    kosli attest artifact meekrosoft/break-glass-example:${SHORT_SHA} \
+                        --artifact-type oci \
+                        --flow jenkins-java-example-break-glass \
+                        --trail $GIT_COMMIT \
+                        --name docker-image \
+                        --registry-username meekrosoft \
+                        --registry-password $DOCKER_PASSWORD
+                '''
+            }
+        }
+
+        stage('Assert Artifact') {
+            steps {
                 sh '''
                     kosli attest artifact meekrosoft/break-glass-example:${SHORT_SHA} \
                         --artifact-type oci \
