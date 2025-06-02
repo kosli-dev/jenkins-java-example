@@ -6,7 +6,7 @@ package org.example;
 public class App {
     public String getGreeting() {
         //String password = "opentextpassword"; //For Demo - fails sonar and vulnerability raised in Snyk.
-        return "Hello World!!";
+        return "Hello World!!!!";
     }
 
     public static void main(String[] args) {
