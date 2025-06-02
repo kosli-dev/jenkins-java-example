@@ -3,7 +3,6 @@ pipeline {
         choice(name: 'DEPLOY_ENV', choices: ['staging', 'production'], description: 'Choose environment to deploy')
     }
 
-
     environment {
         KOSLI_ORG = 'kosli-public'
         KOSLI_API_TOKEN = credentials('kosli-api-key')
@@ -17,7 +16,7 @@ pipeline {
        
         // Demo Settings 
         
-        CX_COMPLIANCE = 'true' // Options: true, false. This will be for uploading hardcoded results of code scan.
+        CX_COMPLIANCE = 'false' // Options: true, false. This will be for uploading hardcoded results of code scan.
         CX_DEMO_SCAN_ID = 'hardcoded-fail' // Options: live-scan, hardcoded-pass, hardcoded-fail. live-scan is sync and takes longer.
         CX_DEMO_BASE_SCAN_ID = 'clean-base-scan' // Options: clean-base-scan, has-vulns-base-scan. Used for comparison.
         CX_DEMO_COMPARE_RESULT = 'recurrent_critical' // Options: live-compare, new_critical, new_medium, recurrent_critical. Used for comparison results.
