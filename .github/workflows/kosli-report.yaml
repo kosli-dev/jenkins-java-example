@@ -5,7 +5,7 @@ on:
     - cron: '*/5 * * * *'
   workflow_dispatch:
 
-env: 
+env:
   KOSLI_ORG: kosli-public
   KOSLI_API_TOKEN: "${{ secrets.KOSLI_API_TOKEN_PUBLIC }}"
 
@@ -13,14 +13,26 @@ jobs:
   report:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4.3.1
+      with:
+        role-to-assume: arn:aws:iam::329991379326:role/${{ github.event.repository.name }}
+        aws-region: eu-central-1
+        role-duration-seconds: 900
+        role-session-name: ${{ github.run_id }}
+
     - name: Set up kubeconfig
       run: |
         mkdir -p ~/.kube
-        echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+        aws eks update-kubeconfig --name kosli-demo
 
     - name: Setup Kosli cli
       uses: kosli-dev/setup-cli-action@v2
