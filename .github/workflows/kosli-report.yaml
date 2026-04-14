@@ -7,7 +7,7 @@ on:
 
 env:
   KOSLI_ORG: kosli-public
-  KOSLI_API_TOKEN: "${{ secrets.KOSLI_API_TOKEN_PUBLIC }}"
+  KOSLI_API_TOKEN: "${{ secrets.KOSLI_PUBLIC_API_TOKEN }}"
 
 jobs:
   report:
